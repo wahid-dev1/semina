@@ -8,8 +8,8 @@ export class Product {
   @Prop({ required: true })
   name: string;
 
-  @Prop()
-  description?: string;
+  @Prop({ required: true })
+  description: string;
 
   @Prop({ required: true, enum: ['service', 'product'] })
   type: string;
@@ -23,8 +23,8 @@ export class Product {
   @Prop({ type: Types.ObjectId, ref: 'Branch' })
   branchId?: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'Company' })
-  companyId?: Types.ObjectId;
+  @Prop({ type: Types.ObjectId, ref: 'Provider' })
+  providerId?: Types.ObjectId;
 }
 
 export const ProductSchema = SchemaFactory.createForClass(Product);

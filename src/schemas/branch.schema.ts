@@ -9,10 +9,10 @@ export class OpeningHours {
   day: string;
 
   @Prop()
-  open?: string;
+  open: string;
 
   @Prop()
-  close?: string;
+  close: string;
 
   @Prop({ default: false })
   isClosed: boolean;
@@ -39,13 +39,13 @@ export class Service {
 @Schema({ _id: false })
 export class AppSettings {
   @Prop()
-  logoUrl?: string;
+  logoUrl: string;
 
   @Prop()
-  appInvitationMessage?: string;
+  appInvitationMessage: string;
 
   @Prop()
-  appGiftMessage?: string;
+  appGiftMessage: string;
 }
 
 @Schema({ _id: false })
@@ -53,7 +53,7 @@ export class CancellationPolicy {
   @Prop({ required: true })
   periodHours: number;
 
-  @Prop({ default: false })
+  @Prop({ default: true })
   penaltyApplicable: boolean;
 }
 
@@ -86,10 +86,10 @@ export class Branch {
   @Prop({ required: true })
   timezone: string;
 
-  @Prop({ type: [OpeningHours] })
+  @Prop({ type: [OpeningHours], default: [] })
   openingHours: OpeningHours[];
 
-  @Prop({ type: [Service] })
+  @Prop({ type: [Service], default: [] })
   services: Service[];
 
   @Prop({ type: AppSettings })

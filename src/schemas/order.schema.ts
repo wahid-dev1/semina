@@ -29,8 +29,8 @@ export class Order {
   @Prop({ required: true, enum: ['pending', 'paid', 'canceled'], default: 'pending' })
   status: string;
 
-  @Prop()
-  notes?: string;
+  @Prop({ type: Types.ObjectId, ref: 'Employee' })
+  employeeId?: Types.ObjectId;
 }
 
 export const OrderSchema = SchemaFactory.createForClass(Order);

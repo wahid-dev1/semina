@@ -8,23 +8,23 @@ export class MedicalHistory {
   @Prop({ type: Types.ObjectId, ref: 'Customer', required: true })
   customerId: Types.ObjectId;
 
+  @Prop({ type: Types.ObjectId, ref: 'Branch', required: true })
+  branchId: Types.ObjectId;
+
   @Prop({ required: true })
   fieldOfApplication: string;
 
   @Prop({ default: false })
-  isPregnant: boolean;
+  pregnancy?: boolean;
 
-  @Prop()
-  pregnancyDetails?: string;
+  @Prop({ type: [String], default: [] })
+  diseases?: string[];
 
-  @Prop({ type: [String] })
-  diseases: string[];
+  @Prop({ type: [String], default: [] })
+  healthIssues?: string[];
 
-  @Prop({ type: [String] })
-  healthIssues: string[];
-
-  @Prop({ type: [String] })
-  drugsAndImplants: string[];
+  @Prop({ type: [String], default: [] })
+  drugsImplants?: string[];
 
   @Prop({ required: true })
   termsAccepted: boolean;
@@ -32,8 +32,8 @@ export class MedicalHistory {
   @Prop()
   signature?: string;
 
-  @Prop()
-  additionalNotes?: string;
+  @Prop({ type: Object })
+  personalData: Record<string, any>;
 }
 
 export const MedicalHistorySchema = SchemaFactory.createForClass(MedicalHistory);

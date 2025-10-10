@@ -8,7 +8,7 @@ export class Subscription {
   @Prop({ type: Types.ObjectId, ref: 'Company', required: true })
   franchiseId: Types.ObjectId;
 
-  @Prop({ type: [{ type: Types.ObjectId, ref: 'Product' }], required: true })
+  @Prop({ type: [Types.ObjectId], ref: 'Product', required: true })
   productIds: Types.ObjectId[];
 
   @Prop({ required: true })

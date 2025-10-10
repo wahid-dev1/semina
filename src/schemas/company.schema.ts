@@ -8,29 +8,23 @@ export class Company {
   @Prop({ required: true })
   name: string;
 
-  @Prop({ required: true, unique: true })
-  email: string;
-
   @Prop({ required: true })
   contactPerson: string;
 
   @Prop({ required: true })
-  address: string;
+  email: string;
 
   @Prop({ required: true })
   phone: string;
 
   @Prop({ required: true })
-  timezone: string;
-
-  @Prop({ type: Types.ObjectId, ref: 'Provider', required: true })
-  providerId: Types.ObjectId;
+  address: string;
 
   @Prop({ default: true })
   enabled: boolean;
 
-  @Prop()
-  lastLogin?: Date;
+  @Prop({ type: Types.ObjectId, ref: 'Provider', required: true })
+  providerId: Types.ObjectId;
 }
 
 export const CompanySchema = SchemaFactory.createForClass(Company);

@@ -5,7 +5,7 @@ export type ProviderDocument = Provider & Document;
 
 @Schema({ timestamps: true })
 export class Provider {
-  @Prop({ required: true, unique: true })
+  @Prop({ required: true })
   name: string;
 
   @Prop({ required: true, unique: true })

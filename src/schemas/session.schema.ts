@@ -5,7 +5,7 @@ export type SessionDocument = Session & Document;
 
 @Schema({ timestamps: true })
 export class Session {
-  @Prop({ required: true })
+  @Prop({ required: true, unique: true })
   token: string;
 
   @Prop({ type: Types.ObjectId, ref: 'Employee' })
@@ -13,9 +13,6 @@ export class Session {
 
   @Prop({ type: Types.ObjectId, ref: 'Customer' })
   customerId?: Types.ObjectId;
-
-  @Prop({ required: true })
-  userType: 'employee' | 'customer';
 
   @Prop({ required: true })
   expiresAt: Date;

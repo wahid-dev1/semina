@@ -1,12 +1,12 @@
-# Medical POS System Backend API
+# Medical POS System Backend
 
-A comprehensive backend API for a Medical POS System built with NestJS, MongoDB, and Redis. This system enables Software Providers to manage Franchise Companies with multiple Branches, each handling employees, customers, orders, and medical data.
+A comprehensive backend API for a Medical POS System built with NestJS, MongoDB, and Redis. This system enables Software Providers to manage Franchise Companies, each containing multiple Branches that handle employees, customers, services, and orders.
 
-## 🏗️ System Architecture
+## 🏗️ Architecture
 
 ```
 Software Provider
- └── Franchise Company
+ └── Company (Franchise)
       ├── Branches
       │    ├── Employees
       │    ├── Customers
@@ -14,16 +14,16 @@ Software Provider
       │    ├── Services
       │    ├── Products
       │    ├── Subscriptions
-      │    └── Branch Settings
+      │    └── Settings
 ```
 
 ## 🚀 Tech Stack
 
 - **Framework**: NestJS
 - **Database**: MongoDB (Mongoose ODM)
-- **Cache**: Redis (for QR session and tokens)
-- **Storage**: S3-compatible (for 3D scans, files)
-- **Authentication**: JWT + One-time QR Code
+- **Cache**: Redis (sessions, QR codes, tokens)
+- **Storage**: S3-compatible storage (files, 3D scans, logos)
+- **Authentication**: JWT + One-time QR code
 - **Email**: SMTP / SendGrid
 - **API Format**: RESTful JSON
 
@@ -31,51 +31,39 @@ Software Provider
 
 ### Core Modules
 
-1. **Authentication & Authorization**
-   - JWT-based authentication
-   - One-time QR code login for customers
-   - Role-based access control (RBAC)
-   - Session management with Redis
+1. **Companies** - Manage franchise-level data (Software Provider only)
+2. **Branches** - Manage individual franchise branches with complex configuration
+3. **Employees** - Branch-level POS users with role-based access control
+4. **Customers** - Medical customers and related data
+5. **Orders** - POS transactions and payment tracking
+6. **Products** - Globally managed items/services
+7. **Subscriptions** - Link products to franchise companies
+8. **Medical Form** - Public customer registration via health intake form
+9. **Dashboard** - Analytics and branch KPIs
+10. **Auth** - Authentication and QR login
+11. **Audit & Logs** - Track actions and access events
 
-2. **Branch Management**
-   - Complete branch configuration
-   - Opening hours management
-   - Services and resources tracking
-   - App settings and policies
+### Key Features
 
-3. **Employee Management**
-   - Multi-role employee system (Admin, Manager, Operator)
-   - Password management
-   - Branch-specific access control
-
-4. **Customer Management**
-   - Medical customer profiles
-   - Medical history tracking
-   - QR code generation for login
-
-5. **Order Management**
-   - POS transaction handling
-   - Payment method tracking
-   - Order status management
-   - Analytics and reporting
-
-6. **Product & Subscription Management**
-   - Global product catalog
-   - Branch-specific products
-   - Franchise subscriptions
-
-7. **Medical Form System**
-   - Comprehensive medical history forms
-   - One-time QR code generation
-   - Terms and conditions handling
-
-8. **Dashboard & Analytics**
-   - Real-time metrics
-   - Branch performance tracking
-   - Customer activity monitoring
-   - Revenue analytics
+- **Multi-tenant Architecture**: Provider → Company → Branch hierarchy
+- **Role-based Access Control**: Admin, Manager, Operator roles
+- **QR Code Authentication**: One-time login for customers
+- **Medical Form Integration**: Public customer registration
+- **Real-time Analytics**: Dashboard with KPIs and metrics
+- **Comprehensive Audit Logging**: Track all system actions
+- **RESTful API**: Complete CRUD operations for all entities
+- **Swagger Documentation**: Interactive API documentation
 
 ## 🛠️ Installation
+
+### Prerequisites
+
+- Node.js (v20.11+)
+- MongoDB
+- Redis
+- npm or yarn
+
+### Setup
 
 1. **Clone the repository**
    ```bash
@@ -88,33 +76,33 @@ Software Provider
    npm install
    ```
 
-3. **Environment Setup**
+3. **Environment Configuration**
    ```bash
    cp env.example .env
    ```
    
-   Update the `.env` file with your configuration:
+   Update `.env` with your configuration:
    ```env
    # Database
    MONGODB_URI=mongodb://localhost:27017/medical-pos
    REDIS_URL=redis://localhost:6379
-   
+
    # JWT
    JWT_SECRET=your-super-secret-jwt-key
    JWT_EXPIRES_IN=24h
-   
+
    # AWS S3
    AWS_ACCESS_KEY_ID=your-access-key
    AWS_SECRET_ACCESS_KEY=your-secret-key
    AWS_REGION=us-east-1
    AWS_S3_BUCKET=medical-pos-storage
-   
+
    # Email
    SMTP_HOST=smtp.gmail.com
    SMTP_PORT=587
    SMTP_USER=your-email@gmail.com
    SMTP_PASS=your-app-password
-   
+
    # App
    PORT=3000
    NODE_ENV=development
@@ -124,7 +112,7 @@ Software Provider
    ```bash
    # Development
    npm run start:dev
-   
+
    # Production
    npm run build
    npm run start:prod
@@ -133,166 +121,56 @@ Software Provider
 ## 📚 API Documentation
 
 Once the application is running, visit:
-- **Swagger UI**: http://localhost:3000/api
-- **API Base URL**: http://localhost:3000
+- **API Documentation**: http://localhost:3000/api/docs
+- **Health Check**: http://localhost:3000
 
 ## 🔐 Authentication
 
-### Employee Login
+### Employee Authentication
 ```bash
 POST /auth/login
 {
-  "email": "employee@example.com",
+  "email": "admin@example.com",
   "password": "password123"
 }
 ```
 
-### Customer QR Login
+### QR Code Authentication
 ```bash
 POST /auth/login-qr
 {
-  "qrCode": "generated-qr-code-string"
+  "qrCode": "abc123def456"
 }
 ```
 
-### Token Refresh
-```bash
-POST /auth/refresh
-{
-  "refreshToken": "your-refresh-token"
-}
-```
+## 🏥 Medical Form Flow
 
-## 🏢 Branch Management
-
-### Create Branch
-```bash
-POST /branches
-{
-  "branchName": "WellCare Berlin",
-  "contactPerson": "Dr. Anna Meier",
-  "address": "Kurfürstendamm 123, 10711 Berlin, Germany",
-  "phone": "+49 30 123456",
-  "email": "berlin@wellcare.com",
-  "timezone": "Europe/Berlin",
-  "openingHours": [
-    {
-      "day": "monday",
-      "open": "08:00",
-      "close": "18:00",
-      "isClosed": false
-    }
-  ],
-  "services": [
-    {
-      "name": "Cryotherapy",
-      "type": "treatment",
-      "maxResource": 3,
-      "resourceUsed": 1,
-      "active": true
-    }
-  ],
-  "appSettings": {
-    "logoUrl": "https://cdn.example.com/berlin-logo.png",
-    "appInvitationMessage": "Welcome to WellCare!",
-    "appGiftMessage": "Enjoy your first session on us!"
-  },
-  "cancellationPolicy": {
-    "periodHours": 24,
-    "penaltyApplicable": true
-  },
-  "calendarSettings": {
-    "timeIntervalMinutes": 30,
-    "allowMultiServiceBooking": true
-  },
-  "enabled": true,
-  "visibleToOthers": false,
-  "companyId": "60f7b3b3b3b3b3b3b3b3b3b3"
-}
-```
-
-## 👥 Employee Management
-
-### Create Employee
-```bash
-POST /employees
-{
-  "username": "john_doe",
-  "firstname": "John",
-  "lastname": "Doe",
-  "email": "john.doe@example.com",
-  "password": "password123",
-  "personalPin": "1234",
-  "branchId": "60f7b3b3b3b3b3b3b3b3b3b3",
-  "enabled": true,
-  "role": "admin",
-  "language": "en"
-}
-```
-
-## 🏥 Medical Form Submission
-
-### Submit Medical Form
-```bash
-POST /medical-form/submit
-{
-  "firstname": "John",
-  "lastname": "Doe",
-  "email": "john.doe@example.com",
-  "phone": "+1234567890",
-  "dateOfBirth": "1990-01-01",
-  "gender": "male",
-  "address": "123 Main St, City, Country",
-  "branchId": "60f7b3b3b3b3b3b3b3b3b3b3",
-  "fieldOfApplication": "health",
-  "isPregnant": false,
-  "diseases": ["Diabetes", "Hypertension"],
-  "healthIssues": ["Chronic Pain"],
-  "drugsAndImplants": ["Insulin"],
-  "termsAccepted": true,
-  "signature": "John Doe",
-  "additionalNotes": "Regular checkups needed"
-}
-```
+1. Customer submits medical form at `/medical-form/submit`
+2. System creates:
+   - Customer record
+   - Medical history
+   - One-time QR code
+3. Customer uses QR code to log in
+4. QR code becomes invalid after first use
 
 ## 📊 Dashboard Analytics
 
-### Get Summary
-```bash
-GET /dashboard/summary?branchId=60f7b3b3b3b3b3b3b3b3b3b3
-```
+The dashboard provides:
+- Customer statistics
+- Order and revenue metrics
+- Product performance
+- Employee activity
+- Branch workload analysis
+- Recent activity timeline
 
-### Get Branch Stats
-```bash
-GET /dashboard/branch-stats
-```
+## 🔍 Audit & Logging
 
-### Get Workload Analysis
-```bash
-GET /dashboard/workload?branchId=60f7b3b3b3b3b3b3b3b3b3b3
-```
-
-## 🔒 Role-Based Access Control
-
-- **Admin**: Full system access, can manage all branches and employees
-- **Manager**: Limited admin rights, can manage their branch
-- **Operator**: POS and orders only, limited customer management
-
-## 📝 Database Collections
-
-| Collection | Description |
-|------------|-------------|
-| `providers` | Software providers (root admins) |
-| `companies` | Franchise companies |
-| `branches` | Branch info + configurations |
-| `employees` | Branch employees |
-| `customers` | Medical customers |
-| `orders` | Customer transactions |
-| `products` | Items or services |
-| `subscriptions` | Franchise subscriptions |
-| `medical_histories` | Full medical forms |
-| `qrcodes` | One-time login codes |
-| `sessions` | Active user sessions |
+All system actions are logged including:
+- CRUD operations
+- Login/logout events
+- Order processing
+- Configuration changes
+- User activities
 
 ## 🧪 Testing
 
@@ -307,32 +185,77 @@ npm run test:e2e
 npm run test:cov
 ```
 
-## 🚀 Deployment
+## 📝 API Endpoints
 
-1. **Build the application**
-   ```bash
-   npm run build
-   ```
+### Authentication
+- `POST /auth/login` - Employee login
+- `POST /auth/login-qr` - QR code login
+- `POST /auth/refresh` - Refresh token
+- `POST /auth/logout` - Logout
 
-2. **Set production environment variables**
+### Companies
+- `GET /companies` - List companies
+- `POST /companies` - Create company
+- `GET /companies/:id` - Get company
+- `PATCH /companies/:id` - Update company
+- `DELETE /companies/:id` - Delete company
 
-3. **Start the application**
-   ```bash
-   npm run start:prod
-   ```
+### Branches
+- `GET /branches` - List branches
+- `POST /branches` - Create branch
+- `GET /branches/:id` - Get branch
+- `PATCH /branches/:id` - Update branch
+- `DELETE /branches/:id` - Delete branch
 
-## 📄 License
+### Employees
+- `GET /employees` - List employees
+- `POST /employees` - Create employee
+- `GET /employees/:id` - Get employee
+- `PATCH /employees/:id` - Update employee
+- `DELETE /employees/:id` - Delete employee
 
-This project is licensed under the ISC License.
+### Customers
+- `GET /customers` - List customers
+- `POST /customers` - Create customer
+- `GET /customers/:id` - Get customer
+- `PATCH /customers/:id` - Update customer
+- `DELETE /customers/:id` - Delete customer
+
+### Orders
+- `GET /orders` - List orders
+- `POST /orders` - Create order
+- `GET /orders/:id` - Get order
+- `PATCH /orders/:id` - Update order
+- `DELETE /orders/:id` - Delete order
+
+### Products
+- `GET /products` - List products
+- `POST /products` - Create product
+- `GET /products/:id` - Get product
+- `PATCH /products/:id` - Update product
+- `DELETE /products/:id` - Delete product
+
+### Dashboard
+- `GET /dashboard/summary` - Get summary
+- `GET /dashboard/branch-stats/:id` - Get branch stats
+- `GET /dashboard/recent-logins` - Get recent logins
+
+### Medical Form (Public)
+- `POST /medical-form/submit` - Submit form
+- `GET /medical-form/options` - Get form options
 
 ## 🤝 Contributing
 
 1. Fork the repository
 2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
+3. Make your changes
+4. Add tests
+5. Submit a pull request
 
-## 📞 Support
+## 📄 License
 
-For support and questions, please contact the development team.
+This project is licensed under the MIT License.
+
+## 🆘 Support
+
+For support, please contact the development team or create an issue in the repository.

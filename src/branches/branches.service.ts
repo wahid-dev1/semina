@@ -1,0 +1,198 @@
+import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { Branch, BranchDocument } from '../schemas/branch.schema';
+import { Company, CompanyDocument } from '../schemas/company.schema';
+import { AuditLog, AuditLogDocument } from '../schemas/audit-log.schema';
+import { CreateBranchDto } from './dto/create-branch.dto';
+import { UpdateBranchDto } from './dto/update-branch.dto';
+
+@Injectable()
+export class BranchesService {
+  constructor(
+    @InjectModel(Branch.name) private branchModel: Model<BranchDocument>,
+    @InjectModel(Company.name) private companyModel: Model<CompanyDocument>,
+    @InjectModel(AuditLog.name) private auditLogModel: Model<AuditLogDocument>,
+  ) {}
+
+  async create(createBranchDto: CreateBranchDto, providerId: string, ipAddress: string): Promise<Branch> {
+    // Verify company exists and belongs to provider
+    const company = await this.companyModel.findOne({ 
+      _id: createBranchDto.companyId, 
+      providerId 
+    }).exec();
+    
+    if (!company) {
+      throw new NotFoundException('Company not found');
+    }
+
+    // Check if branch with same email already exists
+    const existingBranch = await this.branchModel.findOne({ email: createBranchDto.email }).exec();
+    if (existingBranch) {
+      throw new ConflictException('Branch with this email already exists');
+    }
+
+    const branch = new this.branchModel(createBranchDto);
+    const savedBranch = await branch.save();
+
+    // Log creation
+    await this.auditLogModel.create({
+      action: 'CREATE',
+      entity: 'Branch',
+      entityId: savedBranch._id,
+      newValues: savedBranch.toObject(),
+      ipAddress,
+    });
+
+    return savedBranch;
+  }
+
+  async findAll(providerId: string, companyId?: string): Promise<Branch[]> {
+    const filter: any = {};
+    
+    if (companyId) {
+      // Verify company belongs to provider
+      const company = await this.companyModel.findOne({ 
+        _id: companyId, 
+        providerId 
+      }).exec();
+      
+      if (!company) {
+        throw new NotFoundException('Company not found');
+      }
+      
+      filter.companyId = companyId;
+    } else {
+      // Get all companies for this provider and find branches
+      const companies = await this.companyModel.find({ providerId }).select('_id').exec();
+      const companyIds = companies.map(c => c._id);
+      filter.companyId = { $in: companyIds };
+    }
+
+    return this.branchModel.find(filter).populate('companyId', 'name').exec();
+  }
+
+  async findOne(id: string, providerId: string): Promise<Branch> {
+    const branch = await this.branchModel.findById(id).populate('companyId', 'name').exec();
+    
+    if (!branch) {
+      throw new NotFoundException('Branch not found');
+    }
+
+    // Verify company belongs to provider
+    const company = await this.companyModel.findOne({ 
+      _id: branch.companyId, 
+      providerId 
+    }).exec();
+    
+    if (!company) {
+      throw new NotFoundException('Branch not found');
+    }
+
+    return branch;
+  }
+
+  async update(id: string, updateBranchDto: UpdateBranchDto, providerId: string, ipAddress: string): Promise<Branch> {
+    const branch = await this.branchModel.findById(id).exec();
+    if (!branch) {
+      throw new NotFoundException('Branch not found');
+    }
+
+    // Verify company belongs to provider
+    const company = await this.companyModel.findOne({ 
+      _id: branch.companyId, 
+      providerId 
+    }).exec();
+    
+    if (!company) {
+      throw new NotFoundException('Branch not found');
+    }
+
+    // If companyId is being changed, verify new company belongs to provider
+    if (updateBranchDto.companyId && updateBranchDto.companyId !== branch.companyId.toString()) {
+      const newCompany = await this.companyModel.findOne({ 
+        _id: updateBranchDto.companyId, 
+        providerId 
+      }).exec();
+      
+      if (!newCompany) {
+        throw new BadRequestException('Company not found');
+      }
+    }
+
+    // Check if email is being changed and if it already exists
+    if (updateBranchDto.email && updateBranchDto.email !== branch.email) {
+      const existingBranch = await this.branchModel.findOne({ 
+        email: updateBranchDto.email,
+        _id: { $ne: id }
+      }).exec();
+      if (existingBranch) {
+        throw new ConflictException('Branch with this email already exists');
+      }
+    }
+
+    const oldValues = branch.toObject();
+    Object.assign(branch, updateBranchDto);
+    const updatedBranch = await branch.save();
+
+    // Log update
+    await this.auditLogModel.create({
+      action: 'UPDATE',
+      entity: 'Branch',
+      entityId: branch._id,
+      oldValues,
+      newValues: updatedBranch.toObject(),
+      ipAddress,
+    });
+
+    return updatedBranch;
+  }
+
+  async remove(id: string, providerId: string, ipAddress: string): Promise<void> {
+    const branch = await this.branchModel.findById(id).exec();
+    if (!branch) {
+      throw new NotFoundException('Branch not found');
+    }
+
+    // Verify company belongs to provider
+    const company = await this.companyModel.findOne({ 
+      _id: branch.companyId, 
+      providerId 
+    }).exec();
+    
+    if (!company) {
+      throw new NotFoundException('Branch not found');
+    }
+
+    // Check if branch has employees or customers
+    // Note: In a real implementation, you'd check for related data here
+    // For now, we'll just delete the branch
+
+    await this.branchModel.findByIdAndDelete(id).exec();
+
+    // Log deletion
+    await this.auditLogModel.create({
+      action: 'DELETE',
+      entity: 'Branch',
+      entityId: branch._id,
+      oldValues: branch.toObject(),
+      ipAddress,
+    });
+  }
+
+  async getBranchStats(id: string, providerId: string) {
+    const branch = await this.findOne(id, providerId);
+    
+    // In a real implementation, you'd aggregate data from related collections
+    // For now, return basic branch info
+    return {
+      branchId: (branch as any)._id.toString(),
+      branchName: branch.branchName,
+      totalEmployees: 0, // Would count from employees collection
+      totalCustomers: 0, // Would count from customers collection
+      totalOrders: 0, // Would count from orders collection
+      totalRevenue: 0, // Would sum from orders collection
+      lastActivity: (branch as any).updatedAt || (branch as any).createdAt,
+    };
+  }
+}
