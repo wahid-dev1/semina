@@ -1,0 +1,429 @@
+# 🏥 Medical POS System — API Product Requirements Document (PRD)
+
+## Overview
+
+The **Medical POS System API** is a backend platform (built with **NestJS + MongoDB**) that enables a **Software Provider** to manage **Franchise Companies**, each containing multiple **Branches**.
+
+Every **Branch** manages its **employees, customers, orders, services, and configurations** independently while being centrally monitored by the **Software Provider**.
+
+The platform includes a **Franchise Portal** for company admins and a **Customer API** for medical users who log in using a **one-time QR code** or traditional **email/password**.
+
+---
+
+## System Hierarchy
+
+```
+Software Provider
+ └── Franchise Company
+      ├── Branches
+      │    ├── Employees
+      │    ├── Customers
+      │    ├── Orders
+      │    ├── Services
+      │    ├── Products
+      │    ├── Subscriptions
+      │    └── Branch Settings
+```
+
+---
+
+## Tech Stack
+
+| Layer          | Technology                          |
+| -------------- | ----------------------------------- |
+| Framework      | NestJS                              |
+| Database       | MongoDB (Mongoose ODM)              |
+| Cache          | Redis (for QR session and tokens)   |
+| Storage        | S3-compatible (for 3D scans, files) |
+| Authentication | JWT + One-time QR Code              |
+| Email          | SMTP / SendGrid                     |
+| API Format     | RESTful JSON                        |
+
+---
+
+## 1. Dashboard Module
+
+**Purpose:** Provide operational and analytical insights across branches.
+
+**Key Metrics:**
+
+* Number of customers
+* Total turnover
+* Total sold products
+* Products sold today
+* Workload per weekday
+* Most active customers
+* Last registrations
+* Last employee logins
+
+**Endpoints:**
+
+```
+GET /dashboard/summary
+GET /dashboard/branch-stats
+GET /dashboard/recent-logins
+```
+
+---
+
+## 2. Orders Module
+
+**Purpose:** Manage and track all customer orders (POS transactions).
+
+**Fields:**
+
+```ts
+{
+  id: string,
+  createdAt: Date,
+  customerId: ObjectId,
+  customerName: string,
+  branchId: ObjectId,
+  productId: ObjectId,
+  productName: string,
+  price: number,
+  paymentMethod: string,
+  status: 'pending' | 'paid' | 'canceled'
+}
+```
+
+**Endpoints:**
+
+```
+GET /orders
+GET /orders/stats
+POST /orders
+PATCH /orders/:id
+DELETE /orders/:id
+```
+
+---
+
+## 3. Employees (Users)
+
+**Purpose:** Manage branch-level POS users (admins, operators, etc.).
+
+**Fields:**
+
+```ts
+{
+  id: ObjectId,
+  username: string,
+  firstname: string,
+  lastname: string,
+  email: string,
+  password: string,
+  personalPin: string,
+  branchId: ObjectId,
+  enabled: boolean,
+  role: 'admin' | 'manager' | 'operator',
+  language: string,
+  lastLogin: Date
+}
+```
+
+**Endpoints:**
+
+```
+GET /employees
+POST /employees
+PATCH /employees/:id
+DELETE /employees/:id
+```
+
+---
+
+## 4. Branch Module
+
+**Purpose:** Represents individual physical franchise branches and their configurations.
+
+### 🏢 Master Data
+
+| Field           | Type     | Description                               |
+| --------------- | -------- | ----------------------------------------- |
+| branchName      | string   | Branch display name                       |
+| contactPerson   | string   | Responsible person                        |
+| address         | string   | Full address (street, zip, city, country) |
+| phone           | string   | Contact phone                             |
+| email           | string   | Contact email                             |
+| timezone        | string   | Local time zone                           |
+| enabled         | boolean  | Active/Inactive                           |
+| visibleToOthers | boolean  | Inter-branch visibility                   |
+| companyId       | ObjectId | Parent franchise company                  |
+
+### 🕓 Opening Hours
+
+Array of daily schedules:
+
+```ts
+{
+  day: 'monday' | 'tuesday' | ...,
+  open: string,   // e.g. "08:00"
+  close: string,  // e.g. "18:00"
+  isClosed: boolean
+}
+```
+
+### 🧰 Services
+
+```ts
+{
+  name: string,
+  type: 'treatment' | 'consultation' | 'wellness' | 'custom',
+  maxResource: number,
+  resourceUsed: number,
+  active: boolean
+}
+```
+
+### ⚙️ App Settings
+
+```ts
+{
+  logoUrl: string,
+  appInvitationMessage: string,
+  appGiftMessage: string
+}
+```
+
+### ⏳ Cancellation Policy
+
+```ts
+{
+  periodHours: number,     // e.g. 24 (hours before appointment)
+  penaltyApplicable: boolean
+}
+```
+
+### 📅 Calendar Settings
+
+```ts
+{
+  timeIntervalMinutes: number,   // e.g. 15 or 30
+  allowMultiServiceBooking: boolean
+}
+```
+
+**Endpoints:**
+
+```
+GET /branches
+GET /branches/:id
+POST /branches
+PATCH /branches/:id
+DELETE /branches/:id
+```
+
+---
+
+## 5. Customers Module
+
+**Purpose:** Manage medical customers, profiles, and medical data.
+
+**Structure:**
+
+* Master Data
+* Medical History
+* Orders
+* Appointments
+* 3D Body Scans
+* Settings
+
+**Endpoints:**
+
+```
+GET /customers
+POST /customers
+PATCH /customers/:id
+GET /customers/:id/medical-history
+GET /customers/:id/orders
+```
+
+---
+
+## 6. Medical History Form
+
+**Purpose:** Create new medical customers with full health data and a one-time QR login.
+
+**Sections:**
+
+* Personal Data
+* Field of Application (Health / Sports / Wellness)
+* Pregnancy
+* Diseases
+* Health Issues
+* Drugs & Implants
+* Terms & Conditions (Signature + Acceptance)
+
+**Behavior:**
+
+1. On submission → Creates new `Customer` document
+2. Generates unique **one-time QR code**
+3. Sends optional **welcome email**
+4. Marks QR as **invalid after first use**
+
+**Endpoints:**
+
+```
+POST /medical-form/submit
+GET /medical-form/options
+```
+
+---
+
+## 7. Authentication & Authorization
+
+**Methods:**
+
+1. Email + Password
+2. One-Time QR Code
+
+**Entities:**
+
+* `User` (employee)
+* `Customer`
+* `QRCode`
+* `Session`
+
+**Endpoints:**
+
+```
+POST /auth/login
+POST /auth/login-qr
+POST /auth/refresh
+POST /auth/logout
+```
+
+**Authorization:**
+Role-based access control (RBAC):
+
+* Admin: Full branch control
+* Manager: Limited admin rights
+* Operator: POS & Orders only
+
+---
+
+## 8. Products & Subscriptions
+
+**Purpose:** Managed globally by the Software Provider; customized per franchise or branch.
+
+**Product Fields:**
+
+```ts
+{
+  name: string,
+  description: string,
+  type: 'service' | 'product',
+  price: number,
+  active: boolean,
+  branchId?: ObjectId
+}
+```
+
+**Subscription Fields:**
+
+```ts
+{
+  franchiseId: ObjectId,
+  productIds: ObjectId[],
+  startDate: Date,
+  endDate: Date,
+  active: boolean
+}
+```
+
+**Endpoints:**
+
+```
+GET /products
+POST /products
+GET /subscriptions
+POST /subscriptions
+```
+
+---
+
+## 9. QR Authentication Flow
+
+1. Customer submits **Medical History Form**
+2. System generates **one-time QR**
+3. QR scanned → server verifies → issues JWT token
+4. QR becomes **invalid** immediately after login
+
+---
+
+## 10. Analytics & Audit
+
+**Purpose:** Provide business and operational visibility.
+
+* Track employee actions (create/update/delete)
+* Log login timestamps
+* Provide branch-level performance metrics
+
+---
+
+## Database Design (MongoDB Collections)
+
+| Collection        | Description                                                           |
+| ----------------- | --------------------------------------------------------------------- |
+| providers         | Software providers (root admins)                                      |
+| companies         | Franchise companies                                                   |
+| branches          | Branch info + configurations (master data, hours, services, settings) |
+| employees         | Branch employees                                                      |
+| customers         | Medical customers                                                     |
+| orders            | Customer transactions                                                 |
+| products          | Items or services                                                     |
+| subscriptions     | Franchise subscriptions                                               |
+| medical_histories | Full medical forms                                                    |
+| qrcodes           | One-time login codes                                                  |
+| sessions          | Active user sessions                                                  |
+
+---
+
+## Integration Notes
+
+* All collections indexed by `_id` (ObjectId)
+* Relationships stored via reference IDs
+* Embedded documents used for settings (e.g. branch.openingHours)
+* JWT tokens stored in Redis for session invalidation
+* File uploads (logos, 3D scans) go to S3-compatible storage
+* Mongo transactions used for order + stock consistency
+
+---
+
+## Example Branch Document (MongoDB)
+
+```json
+{
+  "_id": "6711f0a2e8b1a6",
+  "branchName": "WellCare Berlin",
+  "contactPerson": "Dr. Anna Meier",
+  "address": "Kurfürstendamm 123, 10711 Berlin, Germany",
+  "phone": "+49 30 123456",
+  "email": "berlin@wellcare.com",
+  "timezone": "Europe/Berlin",
+  "openingHours": [
+    { "day": "monday", "open": "08:00", "close": "18:00", "isClosed": false },
+    { "day": "sunday", "isClosed": true }
+  ],
+  "services": [
+    { "name": "Cryotherapy", "type": "treatment", "maxResource": 3, "resourceUsed": 1, "active": true }
+  ],
+  "appSettings": {
+    "logoUrl": "https://cdn.example.com/berlin-logo.png",
+    "appInvitationMessage": "Welcome to WellCare!",
+    "appGiftMessage": "Enjoy your first session on us!"
+  },
+  "cancellationPolicy": {
+    "periodHours": 24,
+    "penaltyApplicable": true
+  },
+  "calendarSettings": {
+    "timeIntervalMinutes": 30,
+    "allowMultiServiceBooking": true
+  },
+  "enabled": true,
+  "visibleToOthers": false,
+  "companyId": "6711e88d4b5a1c"
+}
+```
