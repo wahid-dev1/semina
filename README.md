@@ -106,6 +106,9 @@ Software Provider
    # App
    PORT=3000
    NODE_ENV=development
+
+   # CORS / Frontend
+   CORS_ORIGINS=http://localhost:5173
    ```
 
 4. **Start the application**
@@ -117,6 +120,19 @@ Software Provider
    npm run build
    npm run start:prod
    ```
+
+## 🐳 Docker
+
+The repository includes a `docker-compose.yml` for running the API together with MongoDB and Redis.
+
+1. Make sure your `.env` file has the required secrets. Database and Redis URLs will be overridden inside the containers. Set `CORS_ORIGINS` to the comma-separated list of frontend URLs (including `http://` or `https://`).
+2. Build and start all services:
+   ```bash
+   docker compose up --build
+   ```
+3. The API will be available at [http://localhost:3000](http://localhost:3000), MongoDB on port `27017`, and Redis on port `6379`.
+
+Stop the stack with `docker compose down`. Add `-v` to also remove the MongoDB and Redis volumes if you need a clean slate.
 
 ## 📚 API Documentation
 

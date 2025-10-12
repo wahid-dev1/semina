@@ -301,6 +301,8 @@ tramp
 Dockerfile
 docker-compose.yml
 docker-compose.yaml
+!.dockerignore
+!Dockerfile
 
 # Kubernetes
 *.yaml

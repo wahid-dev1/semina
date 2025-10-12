@@ -5,6 +5,38 @@ import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 
+// Normalize comma-separated origins and ensure they include an HTTP(S) scheme.
+function resolveCorsOrigins(): string | string[] {
+  const rawOrigins =
+    process.env.CORS_ORIGINS || process.env.FRONTEND_URL || 'http://localhost:3000';
+
+  const normalized = rawOrigins
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean)
+    .map((origin) => {
+      if (origin === '*' || /^https?:\/\//i.test(origin)) {
+        return origin;
+      }
+
+      return `http://${origin}`;
+    });
+
+  if (normalized.includes('*')) {
+    return '*';
+  }
+
+  if (normalized.length === 0) {
+    return 'http://localhost:3000';
+  }
+
+  if (normalized.length === 1) {
+    return normalized[0];
+  }
+
+  return normalized;
+}
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
@@ -22,9 +54,10 @@ async function bootstrap() {
   app.useGlobalInterceptors(new LoggingInterceptor());
 
   // CORS configuration
+  const corsOrigin = resolveCorsOrigins();
   app.enableCors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-    credentials: true,
+    origin: corsOrigin,
+    credentials: corsOrigin === '*' ? false : true,
   });
 
   // Swagger documentation
