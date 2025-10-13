@@ -105,6 +105,7 @@ export class AuthService {
     return {
       accessToken,
       refreshToken,
+      sessionId,
       user: {
         id: employee._id,
         email: employee.email,
@@ -171,6 +172,7 @@ export class AuthService {
     return {
       accessToken,
       refreshToken,
+      sessionId,
       user: {
         id: customer._id,
         email: customer.email,
@@ -189,7 +191,8 @@ export class AuthService {
         email: payload.email,
         role: payload.role,
         branchId: payload.branchId,
-        type: payload.type
+        type: payload.type,
+        sessionId: payload.sessionId,
       };
 
       const newAccessToken = this.jwtService.sign(newPayload);

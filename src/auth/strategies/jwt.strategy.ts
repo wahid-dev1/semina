@@ -19,7 +19,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
   async validate(payload: any) {
     // Check if session exists in Redis
-    const sessionData = await this.redisService.get(`session:${payload.sub}`);
+    const sessionId = payload.sessionId || payload.sid;
+    if (!sessionId) {
+      throw new UnauthorizedException('Session expired');
+    }
+
+    const sessionData = await this.redisService.get(`session:${sessionId}`);
     if (!sessionData) {
       throw new UnauthorizedException('Session expired');
     }
@@ -29,7 +34,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       email: payload.email,
       role: payload.role,
       branchId: payload.branchId,
-      type: payload.type
+      type: payload.type,
+      sessionId,
     };
   }
 }
