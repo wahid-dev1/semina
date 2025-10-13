@@ -35,7 +35,8 @@ export class AuditController {
     @Req() req: any
   ) {
     const userBranchId = req.user.branchId;
-    const filterBranchId = req.user.role === 'admin' ? branchId : userBranchId;
+    const canAccessAllBranches = ['admin', 'super-admin'].includes(req.user.role);
+    const filterBranchId = canAccessAllBranches ? branchId : userBranchId;
 
     const filters = {
       action,
@@ -109,7 +110,8 @@ export class AuditController {
     @Req() req: any
   ) {
     const userBranchId = req.user.branchId;
-    const filterBranchId = req.user.role === 'admin' ? branchId : userBranchId;
+    const canAccessAllBranches = ['admin', 'super-admin'].includes(req.user.role);
+    const filterBranchId = canAccessAllBranches ? branchId : userBranchId;
 
     return this.auditService.getAuditStats(
       filterBranchId,
@@ -129,7 +131,8 @@ export class AuditController {
     @Req() req: any
   ) {
     const userBranchId = req.user.branchId;
-    const filterBranchId = req.user.role === 'admin' ? branchId : userBranchId;
+    const canAccessAllBranches = ['admin', 'super-admin'].includes(req.user.role);
+    const filterBranchId = canAccessAllBranches ? branchId : userBranchId;
     const daysNum = days ? parseInt(days, 10) : 7;
 
     return this.auditService.getActivityTimeline(filterBranchId, daysNum);
@@ -156,7 +159,8 @@ export class AuditController {
     @Req() req: any
   ) {
     const userBranchId = req.user.branchId;
-    const filterBranchId = req.user.role === 'admin' ? branchId : userBranchId;
+    const canAccessAllBranches = ['admin', 'super-admin'].includes(req.user.role);
+    const filterBranchId = canAccessAllBranches ? branchId : userBranchId;
 
     const filters = {
       action,

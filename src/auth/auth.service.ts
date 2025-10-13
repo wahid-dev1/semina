@@ -62,19 +62,20 @@ export class AuthService {
     // Update last login
     await this.employeeModel.findByIdAndUpdate(employee._id, { lastLogin: new Date() });
 
+    const sessionId = randomUUID();
     const payload = {
       sub: employee._id,
       email: employee.email,
       role: employee.role,
       branchId: employee.branchId,
-      type: 'employee'
+      type: 'employee',
+      sessionId,
     };
 
     const accessToken = this.jwtService.sign(payload);
     const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
 
     // Store session in Redis
-    const sessionId = randomUUID();
     await this.redisService.set(`session:${sessionId}`, JSON.stringify({
       userId: employee._id,
       type: 'employee',
@@ -129,18 +130,19 @@ export class AuthService {
       usedAt: new Date()
     });
 
+    const sessionId = randomUUID();
     const payload = {
       sub: customer._id,
       email: customer.email,
       branchId: customer.branchId,
-      type: 'customer'
+      type: 'customer',
+      sessionId,
     };
 
     const accessToken = this.jwtService.sign(payload);
     const refreshToken = this.jwtService.sign(payload, { expiresIn: '24h' });
 
     // Store session in Redis
-    const sessionId = randomUUID();
     await this.redisService.set(`session:${sessionId}`, JSON.stringify({
       userId: customer._id,
       type: 'customer',

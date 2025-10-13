@@ -46,7 +46,7 @@ Software Provider
 ### Key Features
 
 - **Multi-tenant Architecture**: Provider → Company → Branch hierarchy
-- **Role-based Access Control**: Admin, Manager, Operator roles
+- **Role-based Access Control**: Super Admin, Admin, Manager, Operator roles
 - **QR Code Authentication**: One-time login for customers
 - **Medical Form Integration**: Public customer registration
 - **Real-time Analytics**: Dashboard with KPIs and metrics
@@ -109,7 +109,21 @@ Software Provider
 
    # CORS / Frontend
    CORS_ORIGINS=http://localhost:5173
+
+   # Super Admin Bootstrap
+   SUPER_ADMIN_EMAIL=super.admin@example.com
+   SUPER_ADMIN_PASSWORD=changeMe123
+   SUPER_ADMIN_USERNAME=superadmin
+   SUPER_ADMIN_FIRSTNAME=Super
+   SUPER_ADMIN_LASTNAME=Admin
+   SUPER_ADMIN_PIN=0000
+   SUPER_ADMIN_BRANCH_ID=
+   SUPER_ADMIN_LANGUAGE=en
    ```
+
+### Super Admin Bootstrap
+
+When both `SUPER_ADMIN_EMAIL` and `SUPER_ADMIN_PASSWORD` are set, the application will automatically create a `super-admin` account on startup if one does not already exist. The optional environment variables let you customise the username, personal details, PIN (must be four digits), language, and branch association. If the provided branch ID is invalid or omitted, the account is created without branch scoping.
 
 4. **Start the application**
    ```bash

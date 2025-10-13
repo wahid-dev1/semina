@@ -23,13 +23,19 @@ export class Employee {
   @Prop({ required: true })
   personalPin: string;
 
-  @Prop({ type: Types.ObjectId, ref: 'Branch', required: true })
-  branchId: Types.ObjectId;
+  @Prop({
+    type: Types.ObjectId,
+    ref: 'Branch',
+    required: function (this: Employee) {
+      return this.role !== 'super-admin';
+    },
+  })
+  branchId?: Types.ObjectId;
 
   @Prop({ default: true })
   enabled: boolean;
 
-  @Prop({ required: true, enum: ['admin', 'manager', 'operator'] })
+  @Prop({ required: true, enum: ['super-admin', 'admin', 'manager', 'operator'] })
   role: string;
 
   @Prop({ default: 'en' })

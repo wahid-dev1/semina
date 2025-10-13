@@ -37,7 +37,8 @@ export class OrdersController {
   ) {
     // If user is not admin, filter by their branch
     const userBranchId = req.user.branchId;
-    const filterBranchId = req.user.role === 'admin' ? branchId : userBranchId;
+    const canAccessAllBranches = ['admin', 'super-admin'].includes(req.user.role);
+    const filterBranchId = canAccessAllBranches ? branchId : userBranchId;
     return this.ordersService.findAll(filterBranchId, customerId, status);
   }
 
@@ -54,7 +55,8 @@ export class OrdersController {
     @Req() req: any
   ) {
     const userBranchId = req.user.branchId;
-    const filterBranchId = req.user.role === 'admin' ? branchId : userBranchId;
+    const canAccessAllBranches = ['admin', 'super-admin'].includes(req.user.role);
+    const filterBranchId = canAccessAllBranches ? branchId : userBranchId;
     
     const start = startDate ? new Date(startDate) : undefined;
     const end = endDate ? new Date(endDate) : undefined;
@@ -73,7 +75,8 @@ export class OrdersController {
     @Req() req: any
   ) {
     const userBranchId = req.user.branchId;
-    const filterBranchId = req.user.role === 'admin' ? branchId : userBranchId;
+    const canAccessAllBranches = ['admin', 'super-admin'].includes(req.user.role);
+    const filterBranchId = canAccessAllBranches ? branchId : userBranchId;
     const limitNum = limit ? parseInt(limit, 10) : 10;
     
     return this.ordersService.getRecentOrders(filterBranchId, limitNum);

@@ -1,10 +1,11 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { EmployeesService } from './employees.service';
-import { EmployeesController } from './employees.controller';
 import { Employee, EmployeeSchema } from '../schemas/employee.schema';
 import { Branch, BranchSchema } from '../schemas/branch.schema';
 import { AuditLog, AuditLogSchema } from '../schemas/audit-log.schema';
+import { EmployeesService } from './employees.service';
+import { EmployeesController } from './employees.controller';
+import { SuperAdminInitializer } from './super-admin.initializer';
 
 @Module({
   imports: [
@@ -15,7 +16,7 @@ import { AuditLog, AuditLogSchema } from '../schemas/audit-log.schema';
     ]),
   ],
   controllers: [EmployeesController],
-  providers: [EmployeesService],
+  providers: [EmployeesService, SuperAdminInitializer],
   exports: [EmployeesService],
 })
 export class EmployeesModule {}

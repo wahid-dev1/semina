@@ -36,7 +36,8 @@ export class ProductsController {
     @Req() req: any
   ) {
     const userBranchId = req.user.branchId;
-    const filterBranchId = req.user.role === 'admin' ? branchId : userBranchId;
+    const canAccessAllBranches = ['admin', 'super-admin'].includes(req.user.role);
+    const filterBranchId = canAccessAllBranches ? branchId : userBranchId;
     const activeFilter = active ? active === 'true' : undefined;
     
     return this.productsService.findAll(filterBranchId, type, activeFilter);
@@ -48,7 +49,8 @@ export class ProductsController {
   @ApiResponse({ status: 200, description: 'Product statistics retrieved successfully' })
   async getStats(@Query('branchId') branchId: string, @Req() req: any) {
     const userBranchId = req.user.branchId;
-    const filterBranchId = req.user.role === 'admin' ? branchId : userBranchId;
+    const canAccessAllBranches = ['admin', 'super-admin'].includes(req.user.role);
+    const filterBranchId = canAccessAllBranches ? branchId : userBranchId;
     
     return this.productsService.getProductStats(filterBranchId);
   }

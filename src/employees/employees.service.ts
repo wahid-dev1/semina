@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as bcrypt from 'bcryptjs';
@@ -18,10 +18,16 @@ export class EmployeesService {
   ) {}
 
   async create(createEmployeeDto: CreateEmployeeDto, requesterId: string, ipAddress: string): Promise<Employee> {
-    // Verify branch exists
-    const branch = await this.branchModel.findById(createEmployeeDto.branchId).exec();
-    if (!branch) {
-      throw new NotFoundException('Branch not found');
+    if (createEmployeeDto.role !== 'super-admin' && !createEmployeeDto.branchId) {
+      throw new BadRequestException('Branch is required for non super-admin employees');
+    }
+
+    // Verify branch exists when provided
+    if (createEmployeeDto.branchId) {
+      const branch = await this.branchModel.findById(createEmployeeDto.branchId).exec();
+      if (!branch) {
+        throw new NotFoundException('Branch not found');
+      }
     }
 
     // Check if employee with same username already exists
@@ -111,6 +117,11 @@ export class EmployeesService {
 
     const oldValues = { ...employee.toObject(), password: '[HIDDEN]' };
     Object.assign(employee, updateEmployeeDto);
+
+    if (employee.role !== 'super-admin' && !employee.branchId) {
+      throw new BadRequestException('Branch is required for non super-admin employees');
+    }
+
     const updatedEmployee = await employee.save();
 
     // Log update

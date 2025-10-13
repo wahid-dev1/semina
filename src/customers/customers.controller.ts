@@ -35,7 +35,8 @@ export class CustomersController {
   ) {
     // If user is not admin, filter by their branch
     const userBranchId = req.user.branchId;
-    const filterBranchId = req.user.role === 'admin' ? branchId : userBranchId;
+    const canAccessAllBranches = ['admin', 'super-admin'].includes(req.user.role);
+    const filterBranchId = canAccessAllBranches ? branchId : userBranchId;
     return this.customersService.findAll(filterBranchId, search);
   }
 

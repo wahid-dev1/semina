@@ -22,7 +22,8 @@ export class DashboardController {
   ) {
     // If user is not admin, filter by their branch
     const userBranchId = req.user.branchId;
-    const filterBranchId = req.user.role === 'admin' ? branchId : userBranchId;
+    const canAccessAllBranches = ['admin', 'super-admin'].includes(req.user.role);
+    const filterBranchId = canAccessAllBranches ? branchId : userBranchId;
     
     return this.dashboardService.getSummary(filterBranchId, companyId);
   }
@@ -46,7 +47,8 @@ export class DashboardController {
     @Req() req: any
   ) {
     const userBranchId = req.user.branchId;
-    const filterBranchId = req.user.role === 'admin' ? branchId : userBranchId;
+    const canAccessAllBranches = ['admin', 'super-admin'].includes(req.user.role);
+    const filterBranchId = canAccessAllBranches ? branchId : userBranchId;
     const limitNum = limit ? parseInt(limit, 10) : 10;
     
     return this.dashboardService.getRecentLogins(filterBranchId, limitNum);
@@ -63,7 +65,8 @@ export class DashboardController {
     @Req() req: any
   ) {
     const userBranchId = req.user.branchId;
-    const filterBranchId = req.user.role === 'admin' ? branchId : userBranchId;
+    const canAccessAllBranches = ['admin', 'super-admin'].includes(req.user.role);
+    const filterBranchId = canAccessAllBranches ? branchId : userBranchId;
     const daysNum = days ? parseInt(days, 10) : 30;
     
     return this.dashboardService.getRevenueChart(filterBranchId, daysNum);
@@ -80,7 +83,8 @@ export class DashboardController {
     @Req() req: any
   ) {
     const userBranchId = req.user.branchId;
-    const filterBranchId = req.user.role === 'admin' ? branchId : userBranchId;
+    const canAccessAllBranches = ['admin', 'super-admin'].includes(req.user.role);
+    const filterBranchId = canAccessAllBranches ? branchId : userBranchId;
     const limitNum = limit ? parseInt(limit, 10) : 10;
     
     return this.dashboardService.getProductPerformance(filterBranchId, limitNum);
@@ -97,7 +101,8 @@ export class DashboardController {
     @Req() req: any
   ) {
     const userBranchId = req.user.branchId;
-    const filterBranchId = req.user.role === 'admin' ? branchId : userBranchId;
+    const canAccessAllBranches = ['admin', 'super-admin'].includes(req.user.role);
+    const filterBranchId = canAccessAllBranches ? branchId : userBranchId;
     const daysNum = days ? parseInt(days, 10) : 30;
     
     return this.dashboardService.getCustomerGrowth(filterBranchId, daysNum);

@@ -1,4 +1,4 @@
-import { IsString, IsEmail, IsNotEmpty, IsOptional, IsBoolean, IsEnum, MinLength, Matches } from 'class-validator';
+import { IsString, IsEmail, IsNotEmpty, IsOptional, IsBoolean, IsEnum, MinLength, Matches, ValidateIf } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateEmployeeDto {
@@ -34,18 +34,19 @@ export class CreateEmployeeDto {
   @Matches(/^\d{4}$/, { message: 'Personal PIN must be exactly 4 digits' })
   personalPin: string;
 
-  @ApiProperty({ example: '507f1f77bcf86cd799439011' })
+  @ApiProperty({ example: '507f1f77bcf86cd799439011', required: false })
+  @ValidateIf((employee) => employee.role !== 'super-admin')
   @IsString()
   @IsNotEmpty()
-  branchId: string;
+  branchId?: string;
 
   @ApiProperty({ example: true, required: false })
   @IsOptional()
   @IsBoolean()
   enabled?: boolean;
 
-  @ApiProperty({ enum: ['admin', 'manager', 'operator'] })
-  @IsEnum(['admin', 'manager', 'operator'])
+  @ApiProperty({ enum: ['super-admin', 'admin', 'manager', 'operator'] })
+  @IsEnum(['super-admin', 'admin', 'manager', 'operator'])
   @IsNotEmpty()
   role: string;
 

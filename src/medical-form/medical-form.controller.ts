@@ -1,5 +1,6 @@
-import { Controller, Post, Get, Body, Param, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Get, Body, Param, Req, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { Request } from 'express';
 import { MedicalFormService } from './medical-form.service';
 import { SubmitMedicalFormDto } from './dto/submit-medical-form.dto';
 
@@ -14,8 +15,12 @@ export class MedicalFormController {
   @ApiResponse({ status: 201, description: 'Medical form submitted successfully' })
   @ApiResponse({ status: 404, description: 'Branch not found or disabled' })
   @ApiResponse({ status: 409, description: 'Customer with this email already exists in this branch' })
-  async submitForm(@Body() submitMedicalFormDto: SubmitMedicalFormDto, @Param() req: any) {
-    const ipAddress = req.ip || req.connection.remoteAddress;
+  async submitForm(@Body() submitMedicalFormDto: SubmitMedicalFormDto, @Req() req: Request) {
+    const ipAddress =
+      req.ip ||
+      req.headers['x-forwarded-for']?.toString().split(',')[0].trim() ||
+      req.socket?.remoteAddress ||
+      null;
     return this.medicalFormService.submitForm(submitMedicalFormDto, ipAddress);
   }
 
