@@ -82,6 +82,22 @@ export class OrdersController {
     return this.ordersService.getRecentOrders(filterBranchId, limitNum);
   }
 
+  @Get('available/services')
+  @ApiOperation({ summary: 'Get available services for direct purchase' })
+  @ApiResponse({ status: 200, description: 'Available services retrieved successfully' })
+  async getAvailableServices(@Req() req: any) {
+    const branchId = req.user.branchId;
+    return this.ordersService.getAvailableServices(branchId);
+  }
+
+  @Get('available/products')
+  @ApiOperation({ summary: 'Get available products (bundles) for purchase' })
+  @ApiResponse({ status: 200, description: 'Available products retrieved successfully' })
+  async getAvailableProducts(@Req() req: any) {
+    const branchId = req.user.branchId;
+    return this.ordersService.getAvailableProducts(branchId);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get order by ID' })
   @ApiResponse({ status: 200, description: 'Order retrieved successfully' })

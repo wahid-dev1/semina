@@ -26,6 +26,9 @@ export class MedicalHistory {
   @Prop({ type: [String], default: [] })
   drugsImplants?: string[];
 
+  @Prop()
+  genericNote?: string;
+
   @Prop({ required: true })
   termsAccepted: boolean;
 

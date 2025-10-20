@@ -218,17 +218,4 @@ export class AuthService {
     );
   }
 
-  async generateQRCode(customerId: string, branchId: string): Promise<string> {
-    const qrCode = randomUUID();
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
-
-    await this.qrCodeModel.create({
-      code: qrCode,
-      customerId,
-      branchId,
-      expiresAt
-    });
-
-    return qrCode;
-  }
 }

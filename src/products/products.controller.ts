@@ -84,6 +84,58 @@ export class ProductsController {
     return this.productsService.toggleStatus(id, requesterId, ipAddress);
   }
 
+  @Get(':id/remaining-services')
+  @ApiOperation({ summary: 'Get remaining services for a product bundle' })
+  @ApiResponse({ status: 200, description: 'Remaining services retrieved successfully' })
+  @ApiResponse({ status: 404, description: 'Product not found' })
+  async getRemainingServices(@Param('id') id: string) {
+    return this.productsService.getRemainingServices(id);
+  }
+
+  @Post(':id/use-service')
+  @ApiOperation({ summary: 'Use a service from a product bundle' })
+  @ApiResponse({ status: 200, description: 'Service used successfully' })
+  @ApiResponse({ status: 404, description: 'Product or service not found' })
+  @ApiResponse({ status: 409, description: 'Not enough remaining quantity' })
+  async useService(
+    @Param('id') productId: string,
+    @Body() body: { serviceId: string; quantity: number; customerId: string; orderId: string },
+    @Req() req: any
+  ) {
+    const employeeId = req.user.id;
+    const branchId = req.user.branchId;
+    return this.productsService.useService(
+      productId,
+      body.serviceId,
+      body.quantity,
+      body.customerId,
+      body.orderId,
+      branchId,
+      employeeId
+    );
+  }
+
+  @Post('use-service-from-order')
+  @ApiOperation({ summary: 'Use a service from an order containing product bundles' })
+  @ApiResponse({ status: 200, description: 'Service used successfully' })
+  @ApiResponse({ status: 404, description: 'Order or service not found' })
+  @ApiResponse({ status: 409, description: 'Not enough remaining quantity' })
+  async useServiceFromOrder(
+    @Body() body: { orderId: string; serviceId: string; quantity: number; customerId: string },
+    @Req() req: any
+  ) {
+    const employeeId = req.user.id;
+    const branchId = req.user.branchId;
+    return this.productsService.useServiceFromOrder(
+      body.orderId,
+      body.serviceId,
+      body.quantity,
+      body.customerId,
+      branchId,
+      employeeId
+    );
+  }
+
   @Delete(':id')
   @ApiOperation({ summary: 'Delete product' })
   @ApiResponse({ status: 200, description: 'Product deleted successfully' })

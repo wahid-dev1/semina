@@ -1,12 +1,13 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { randomUUID } from 'crypto';
 import { Customer, CustomerDocument } from '../schemas/customer.schema';
 import { Branch, BranchDocument } from '../schemas/branch.schema';
 import { MedicalHistory, MedicalHistoryDocument } from '../schemas/medical-history.schema';
 import { Order, OrderDocument } from '../schemas/order.schema';
+import { QRCode, QRCodeDocument } from '../schemas/qr-code.schema';
 import { AuditLog, AuditLogDocument } from '../schemas/audit-log.schema';
-import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
 
 @Injectable()
@@ -16,41 +17,10 @@ export class CustomersService {
     @InjectModel(Branch.name) private branchModel: Model<BranchDocument>,
     @InjectModel(MedicalHistory.name) private medicalHistoryModel: Model<MedicalHistoryDocument>,
     @InjectModel(Order.name) private orderModel: Model<OrderDocument>,
+    @InjectModel(QRCode.name) private qrCodeModel: Model<QRCodeDocument>,
     @InjectModel(AuditLog.name) private auditLogModel: Model<AuditLogDocument>,
   ) {}
 
-  async create(createCustomerDto: CreateCustomerDto, requesterId: string, ipAddress: string): Promise<Customer> {
-    // Verify branch exists
-    const branch = await this.branchModel.findById(createCustomerDto.branchId).exec();
-    if (!branch) {
-      throw new NotFoundException('Branch not found');
-    }
-
-    // Check if customer with same email already exists in this branch
-    const existingCustomer = await this.customerModel.findOne({ 
-      email: createCustomerDto.email,
-      branchId: createCustomerDto.branchId
-    }).exec();
-    if (existingCustomer) {
-      throw new ConflictException('Customer with this email already exists in this branch');
-    }
-
-    const customer = new this.customerModel(createCustomerDto);
-    const savedCustomer = await customer.save();
-
-    // Log creation
-    await this.auditLogModel.create({
-      action: 'CREATE',
-      entity: 'Customer',
-      entityId: savedCustomer._id,
-      employeeId: requesterId,
-      branchId: createCustomerDto.branchId,
-      newValues: savedCustomer.toObject(),
-      ipAddress,
-    });
-
-    return savedCustomer;
-  }
 
   async findAll(branchId?: string, search?: string): Promise<Customer[]> {
     const filter: any = {};
@@ -179,6 +149,7 @@ export class CustomersService {
 
     return this.orderModel.find({ customerId })
       .populate('productId', 'name type price')
+      .populate('serviceId', 'name type price duration')
       .populate('employeeId', 'firstname lastname')
       .sort({ createdAt: -1 })
       .exec();
@@ -195,7 +166,7 @@ export class CustomersService {
     const orders = await this.getOrders(customerId);
     
     const totalOrders = orders.length;
-    const totalSpent = orders.reduce((sum, order) => sum + order.price, 0);
+    const totalSpent = orders.reduce((sum, order) => sum + order.totalPrice, 0);
     const lastOrder = orders.length > 0 ? orders[0] : null;
 
     return {
@@ -206,11 +177,71 @@ export class CustomersService {
       lastVisit: customer.lastVisit,
       lastOrder: lastOrder ? {
         id: (lastOrder as any)._id.toString(),
-        productName: lastOrder.productName,
+        itemName: lastOrder.itemName,
         price: lastOrder.price,
+        quantity: lastOrder.quantity,
+        totalPrice: lastOrder.totalPrice,
         date: (lastOrder as any).createdAt
       } : null,
       hasMedicalHistory: !!customer.medicalHistoryId,
+    };
+  }
+
+  async generateQRCode(customerId: string, branchId: string, requesterId: string, ipAddress: string): Promise<{
+    qrCode: string;
+    expiresAt: Date;
+    message: string;
+  }> {
+    // Verify customer exists
+    const customer = await this.customerModel.findById(customerId).exec();
+    if (!customer) {
+      throw new NotFoundException('Customer not found');
+    }
+
+    // Verify branch exists and is enabled
+    const branch = await this.branchModel.findOne({ 
+      _id: branchId, 
+      enabled: true 
+    }).exec();
+    
+    if (!branch) {
+      throw new NotFoundException('Branch not found or disabled');
+    }
+
+    // Generate new QR code
+    const qrCode = randomUUID();
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+    // Create QR code record
+    const qrCodeDoc = await this.qrCodeModel.create({
+      code: qrCode,
+      customerId,
+      branchId,
+      expiresAt
+    });
+
+    // Update customer with new QR code reference
+    customer.qrCodeId = qrCodeDoc._id as any;
+    await customer.save();
+
+    // Log QR code generation
+    await this.auditLogModel.create({
+      action: 'GENERATE_QR_CODE',
+      entity: 'Customer',
+      entityId: customer._id,
+      employeeId: requesterId,
+      branchId: branchId,
+      newValues: {
+        qrCode: qrCode,
+        expiresAt: expiresAt
+      },
+      ipAddress,
+    });
+
+    return {
+      qrCode,
+      expiresAt,
+      message: 'QR code generated successfully. Customer can use this code to log in.'
     };
   }
 }

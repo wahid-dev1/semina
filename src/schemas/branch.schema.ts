@@ -18,23 +18,6 @@ export class OpeningHours {
   isClosed: boolean;
 }
 
-@Schema({ _id: false })
-export class Service {
-  @Prop({ required: true })
-  name: string;
-
-  @Prop({ required: true, enum: ['treatment', 'consultation', 'wellness', 'custom'] })
-  type: string;
-
-  @Prop({ required: true })
-  maxResource: number;
-
-  @Prop({ default: 0 })
-  resourceUsed: number;
-
-  @Prop({ default: true })
-  active: boolean;
-}
 
 @Schema({ _id: false })
 export class AppSettings {
@@ -89,8 +72,8 @@ export class Branch {
   @Prop({ type: [OpeningHours], default: [] })
   openingHours: OpeningHours[];
 
-  @Prop({ type: [Service], default: [] })
-  services: Service[];
+  @Prop({ type: [Types.ObjectId], ref: 'Service', default: [] })
+  serviceIds: Types.ObjectId[];
 
   @Prop({ type: AppSettings })
   appSettings: AppSettings;

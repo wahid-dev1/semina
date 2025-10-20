@@ -1,0 +1,69 @@
+{
+  "branchId": "68ed4d19f065a774bc15b78d",
+  "personalData": {
+    "gender": "male",
+    "firstName": "John",
+    "lastName": "Doe",
+    "street": "Main Street",
+    "houseNumber": "123",
+    "zip": "10001",
+    "city": "New York",
+    "birthday": "1990-01-01",
+    "telephone": "+1-555-123-4567",
+    "email": "john.doe@example.com",
+    "mayWeContactAssurance": true,
+    "isMinor": false,
+    "unitSystem": "metric",
+    "bodyWeight": 70.5,
+    "bodyHeight": 175,
+    "skinType": 3,
+    "sleepQuality": "Good",
+    "stressLevel": "Moderate",
+    "stressFrequency": "Sometimes"
+  },
+  "fieldOfApplication": {
+    "health": ["Skin diseases", "Arthritis"],
+    "sportsAndFitness": ["Weight training", "Cardio", "Yoga"],
+    "beautyAndWellness": ["Facial treatments", "Body massage", "Sauna"]
+  },
+  "pregnancy": false,
+  "diseases": [
+    {
+      "name": "Diabetes",
+      "hasDisease": true,
+      "note": "Type 2 diabetes diagnosed in 2020"
+    },
+    {
+      "name": "Hypertension",
+      "hasDisease": false,
+      "note": ""
+    }
+  ],
+  "currentAndGeneralHealthIssues": [
+    {
+      "name": "Back pain",
+      "hasIssue": true,
+      "note": "Chronic lower back pain from sitting"
+    },
+    {
+      "name": "Stress",
+      "hasIssue": true,
+      "note": "Work-related stress"
+    }
+  ],
+  "drugsAndImplants": [
+    {
+      "name": "Insulin pump",
+      "hasDrugImplant": true,
+      "note": "Medtronic pump model XYZ"
+    },
+    {
+      "name": "Pacemaker",
+      "hasDrugImplant": false,
+      "note": ""
+    }
+  ],
+  "genericNote": "Regular medication for diabetes management and general health monitoring",
+  "termsAccepted": true,
+  "digitalSignature": "John Doe"
+}

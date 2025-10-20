@@ -1,4 +1,4 @@
-import { IsString, IsEmail, IsNotEmpty, IsOptional, IsBoolean, IsArray, ValidateNested, IsNumber, IsEnum } from 'class-validator';
+import { IsString, IsEmail, IsNotEmpty, IsOptional, IsBoolean, IsArray, ValidateNested, IsNumber, IsEnum, IsMongoId } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -24,32 +24,6 @@ export class OpeningHoursDto {
   isClosed?: boolean;
 }
 
-export class ServiceDto {
-  @ApiProperty({ example: 'Cryotherapy' })
-  @IsString()
-  @IsNotEmpty()
-  name: string;
-
-  @ApiProperty({ enum: ['treatment', 'consultation', 'wellness', 'custom'] })
-  @IsEnum(['treatment', 'consultation', 'wellness', 'custom'])
-  @IsNotEmpty()
-  type: string;
-
-  @ApiProperty({ example: 3 })
-  @IsNumber()
-  @IsNotEmpty()
-  maxResource: number;
-
-  @ApiProperty({ example: 0, required: false })
-  @IsOptional()
-  @IsNumber()
-  resourceUsed?: number;
-
-  @ApiProperty({ example: true, required: false })
-  @IsOptional()
-  @IsBoolean()
-  active?: boolean;
-}
 
 export class AppSettingsDto {
   @ApiProperty({ example: 'https://cdn.example.com/logo.png', required: false })
@@ -130,12 +104,16 @@ export class CreateBranchDto {
   @Type(() => OpeningHoursDto)
   openingHours?: OpeningHoursDto[];
 
-  @ApiProperty({ type: [ServiceDto], required: false })
+  @ApiProperty({ 
+    type: [String], 
+    example: ['507f1f77bcf86cd799439011'], 
+    required: false,
+    description: 'Array of service IDs available at this branch'
+  })
   @IsOptional()
   @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => ServiceDto)
-  services?: ServiceDto[];
+  @IsMongoId({ each: true })
+  serviceIds?: string[];
 
   @ApiProperty({ type: AppSettingsDto, required: false })
   @IsOptional()
