@@ -1,7 +1,6 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, Query } from '@nestjs/common';
+import { Controller, Get, Patch, Param, Delete, UseGuards, Req, Query, Body } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { CustomersService } from './customers.service';
-import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
@@ -12,16 +11,6 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 export class CustomersController {
   constructor(private readonly customersService: CustomersService) {}
 
-  @Post()
-  @ApiOperation({ summary: 'Create a new customer' })
-  @ApiResponse({ status: 201, description: 'Customer created successfully' })
-  @ApiResponse({ status: 404, description: 'Branch not found' })
-  @ApiResponse({ status: 409, description: 'Customer with this email already exists in this branch' })
-  async create(@Body() createCustomerDto: CreateCustomerDto, @Req() req: any) {
-    const requesterId = req.user.id;
-    const ipAddress = req.ip || req.connection.remoteAddress;
-    return this.customersService.create(createCustomerDto, requesterId, ipAddress);
-  }
 
   @Get()
   @ApiOperation({ summary: 'Get all customers' })
@@ -93,5 +82,16 @@ export class CustomersController {
     const ipAddress = req.ip || req.connection.remoteAddress;
     await this.customersService.remove(id, requesterId, ipAddress);
     return { message: 'Customer deleted successfully' };
+  }
+
+  @Get(':id/generate-qr')
+  @ApiOperation({ summary: 'Generate QR code for customer' })
+  @ApiQuery({ name: 'branchId', required: true, description: 'Branch ID for QR code generation' })
+  @ApiResponse({ status: 200, description: 'QR code generated successfully' })
+  @ApiResponse({ status: 404, description: 'Customer not found or branch not found' })
+  async generateQRCode(@Param('id') id: string, @Query('branchId') branchId: string, @Req() req: any) {
+    const requesterId = req.user.id;
+    const ipAddress = req.ip || req.connection.remoteAddress;
+    return this.customersService.generateQRCode(id, branchId, requesterId, ipAddress);
   }
 }

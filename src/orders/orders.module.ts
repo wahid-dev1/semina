@@ -5,6 +5,7 @@ import { OrdersController } from './orders.controller';
 import { Order, OrderSchema } from '../schemas/order.schema';
 import { Customer, CustomerSchema } from '../schemas/customer.schema';
 import { Product, ProductSchema } from '../schemas/product.schema';
+import { Service, ServiceSchema } from '../schemas/service.schema';
 import { Branch, BranchSchema } from '../schemas/branch.schema';
 import { AuditLog, AuditLogSchema } from '../schemas/audit-log.schema';
 
@@ -14,6 +15,7 @@ import { AuditLog, AuditLogSchema } from '../schemas/audit-log.schema';
       { name: Order.name, schema: OrderSchema },
       { name: Customer.name, schema: CustomerSchema },
       { name: Product.name, schema: ProductSchema },
+      { name: Service.name, schema: ServiceSchema },
       { name: Branch.name, schema: BranchSchema },
       { name: AuditLog.name, schema: AuditLogSchema },
     ]),

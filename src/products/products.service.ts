@@ -3,7 +3,9 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Product, ProductDocument } from '../schemas/product.schema';
 import { Branch, BranchDocument } from '../schemas/branch.schema';
+import { Service, ServiceDocument } from '../schemas/service.schema';
 import { AuditLog, AuditLogDocument } from '../schemas/audit-log.schema';
+import { Order, OrderDocument } from '../schemas/order.schema';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 
@@ -12,32 +14,56 @@ export class ProductsService {
   constructor(
     @InjectModel(Product.name) private productModel: Model<ProductDocument>,
     @InjectModel(Branch.name) private branchModel: Model<BranchDocument>,
+    @InjectModel(Service.name) private serviceModel: Model<ServiceDocument>,
     @InjectModel(AuditLog.name) private auditLogModel: Model<AuditLogDocument>,
+    @InjectModel(Order.name) private orderModel: Model<OrderDocument>,
   ) {}
 
   async create(createProductDto: CreateProductDto, requesterId: string, ipAddress: string): Promise<Product> {
-    // If branchId is provided, verify branch exists
-    if (createProductDto.branchId) {
-      const branch = await this.branchModel.findById(createProductDto.branchId).exec();
-      if (!branch) {
-        throw new NotFoundException('Branch not found');
-      }
+    // Verify branch exists
+    const branch = await this.branchModel.findById(createProductDto.branchId).exec();
+    if (!branch) {
+      throw new NotFoundException('Branch not found');
     }
 
-    // Check if product with same name already exists in the same scope
+    // Verify company exists
+    const company = await this.branchModel.findById(createProductDto.branchId).populate('companyId').exec();
+    if (!company) {
+      throw new NotFoundException('Company not found');
+    }
+
+    // Check if product with same name already exists in the same branch
     const existingProduct = await this.productModel.findOne({
       name: createProductDto.name,
-      $or: [
-        { branchId: createProductDto.branchId },
-        { branchId: { $exists: !createProductDto.branchId } }
-      ]
+      branchId: createProductDto.branchId
     }).exec();
 
     if (existingProduct) {
-      throw new ConflictException('Product with this name already exists in this scope');
+      throw new ConflictException('Product with this name already exists in this branch');
     }
 
-    const product = new this.productModel(createProductDto);
+    // For bundle products, validate that the service exists and is available in the branch
+    if (createProductDto.type === 'bundle') {
+      const service = await this.serviceModel.findOne({ 
+        _id: createProductDto.serviceId,
+        active: true 
+      }).exec();
+      
+      if (!service) {
+        throw new ConflictException('Service not found or inactive');
+      }
+      
+      // Check if service is available in the branch
+      const branchServiceIds = branch.serviceIds.map(id => id.toString());
+      if (!branchServiceIds.includes(createProductDto.serviceId)) {
+        throw new ConflictException(`Service '${service.name}' is not available in this branch`);
+      }
+    }
+
+    const product = new this.productModel({
+      ...createProductDto,
+      companyId: company.companyId
+    });
     const savedProduct = await product.save();
 
     // Log creation
@@ -59,12 +85,6 @@ export class ProductsService {
     
     if (branchId) {
       filter.branchId = branchId;
-    } else {
-      // If no branchId specified, get global products (no branchId) and products for all branches
-      filter.$or = [
-        { branchId: { $exists: false } },
-        { branchId: null }
-      ];
     }
     
     if (type) {
@@ -77,6 +97,7 @@ export class ProductsService {
 
     return this.productModel.find(filter)
       .populate('branchId', 'branchName')
+      .populate('companyId', 'name')
       .sort({ name: 1 })
       .exec();
   }
@@ -219,6 +240,94 @@ export class ProductsService {
         min: products.length > 0 ? Math.min(...products.map(p => p.price)) : 0,
         max: products.length > 0 ? Math.max(...products.map(p => p.price)) : 0,
       }
+    };
+  }
+
+  async useService(productId: string, serviceId: string, quantity: number, customerId: string, orderId: string, branchId: string, employeeId?: string): Promise<void> {
+    const product = await this.productModel.findById(productId).exec();
+    if (!product) {
+      throw new NotFoundException('Product not found');
+    }
+
+    if (product.type !== 'bundle') {
+      throw new ConflictException('Product is not a bundle');
+    }
+
+    // Check if the service ID matches the product's service
+    if (product.serviceId.toString() !== serviceId) {
+      throw new NotFoundException('Service not found in this product');
+    }
+
+    if (product.usedQuantity + quantity > product.quantity) {
+      throw new ConflictException('Not enough remaining quantity for this service');
+    }
+
+    // Update used quantity
+    product.usedQuantity += quantity;
+    await product.save();
+
+    // Log service usage
+    await this.auditLogModel.create({
+      action: 'USE_SERVICE',
+      entity: 'Product',
+      entityId: product._id,
+      employeeId,
+      branchId,
+      customerId,
+      orderId,
+      newValues: { serviceId, quantityUsed: quantity },
+      ipAddress: 'system',
+    });
+  }
+
+  async useServiceFromOrder(orderId: string, serviceId: string, quantity: number, customerId: string, branchId: string, employeeId?: string): Promise<void> {
+    // Find the order and get the product bundles
+    const order = await this.orderModel.findById(orderId).exec();
+    if (!order) {
+      throw new NotFoundException('Order not found');
+    }
+
+    // Find the product bundle in the order that contains this service
+    const productItem = order.itemType === 'product' && 
+      order.includedServiceIds && 
+      order.includedServiceIds.some(id => id.toString() === serviceId) ? order : null;
+
+    if (!productItem || !productItem.productId) {
+      throw new NotFoundException('Service not found in any product bundle in this order');
+    }
+
+    // Use the service from the product
+    await this.useService(
+      productItem.productId.toString(),
+      serviceId,
+      quantity,
+      customerId,
+      orderId,
+      branchId,
+      employeeId
+    );
+  }
+
+  async getRemainingServices(productId: string): Promise<any> {
+    const product = await this.productModel.findById(productId)
+      .populate('serviceId', 'name type')
+      .exec();
+    
+    if (!product) {
+      throw new NotFoundException('Product not found');
+    }
+
+    if (product.type !== 'bundle') {
+      return { message: 'Product is not a bundle' };
+    }
+
+    return {
+      serviceId: product.serviceId,
+      serviceName: (product.serviceId as any).name,
+      serviceType: (product.serviceId as any).type,
+      totalQuantity: product.quantity,
+      usedQuantity: product.usedQuantity,
+      remainingQuantity: product.quantity - product.usedQuantity
     };
   }
 }

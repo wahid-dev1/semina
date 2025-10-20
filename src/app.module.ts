@@ -11,7 +11,7 @@ import { CustomersModule } from './customers/customers.module';
 import { MedicalFormModule } from './medical-form/medical-form.module';
 import { OrdersModule } from './orders/orders.module';
 import { ProductsModule } from './products/products.module';
-import { SubscriptionsModule } from './subscriptions/subscriptions.module';
+import { ServicesModule } from './services/services.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { AuditModule } from './audit/audit.module';
 import { DatabaseModule } from './common/database/database.module';
@@ -32,7 +32,7 @@ import { DatabaseModule } from './common/database/database.module';
     MedicalFormModule,
     OrdersModule,
     ProductsModule,
-    SubscriptionsModule,
+    ServicesModule,
     DashboardModule,
     AuditModule,
   ],

@@ -46,10 +46,10 @@ export class MedicalFormService {
 
     // Create customer
     const customer = new this.customerModel({
-      firstname: submitMedicalFormDto.personalData.firstname,
-      lastname: submitMedicalFormDto.personalData.lastname,
+      firstname: submitMedicalFormDto.personalData.firstName,
+      lastname: submitMedicalFormDto.personalData.lastName,
       email: submitMedicalFormDto.personalData.email,
-      phone: submitMedicalFormDto.personalData.phone,
+      phone: submitMedicalFormDto.personalData.telephone,
       branchId: submitMedicalFormDto.branchId,
     });
 
@@ -62,10 +62,11 @@ export class MedicalFormService {
       fieldOfApplication: submitMedicalFormDto.fieldOfApplication,
       pregnancy: submitMedicalFormDto.pregnancy,
       diseases: submitMedicalFormDto.diseases || [],
-      healthIssues: submitMedicalFormDto.healthIssues || [],
-      drugsImplants: submitMedicalFormDto.drugsImplants || [],
+      healthIssues: submitMedicalFormDto.currentAndGeneralHealthIssues || [],
+      drugsImplants: submitMedicalFormDto.drugsAndImplants || [],
+      genericNote: submitMedicalFormDto.genericNote,
       termsAccepted: submitMedicalFormDto.termsAccepted,
-      signature: submitMedicalFormDto.signature,
+      signature: submitMedicalFormDto.digitalSignature,
       personalData: submitMedicalFormDto.personalData,
     });
 
@@ -116,10 +117,18 @@ export class MedicalFormService {
 
   async getFormOptions(): Promise<{
     branches: Array<{ id: string; name: string; address: string; phone: string; email: string }>;
-    fieldOfApplicationOptions: string[];
+    healthOptions: string[];
+    sportsAndFitnessOptions: string[];
+    beautyAndWellnessOptions: string[];
     diseaseOptions: string[];
     healthIssueOptions: string[];
     drugImplantOptions: string[];
+    genderOptions: string[];
+    unitSystemOptions: string[];
+    skinTypeOptions: Array<{ value: number; label: string }>;
+    sleepQualityOptions: string[];
+    stressLevelOptions: string[];
+    stressFrequencyOptions: string[];
   }> {
     // Get all enabled branches
     const branches = await this.branchModel.find({ enabled: true })
@@ -134,16 +143,49 @@ export class MedicalFormService {
       email: branch.email,
     }));
 
-    // These would typically come from a configuration or database
-    const fieldOfApplicationOptions = [
-      'Cryotherapy treatment',
-      'Wellness consultation',
-      'Physical therapy',
-      'Massage therapy',
-      'Sauna therapy',
+    // Field of Application options
+    const healthOptions = [
+      'Skin diseases',
+      'Arthritis',
+      'Diabetes',
+      'Hypertension',
+      'Heart disease',
+      'Asthma',
+      'Cancer',
+      'Epilepsy',
+      'Chronic pain',
+      'Autoimmune diseases',
       'Other'
     ];
 
+    const sportsAndFitnessOptions = [
+      'Weight training',
+      'Cardio',
+      'Yoga',
+      'Pilates',
+      'Swimming',
+      'Running',
+      'Cycling',
+      'Team sports',
+      'Martial arts',
+      'Dance',
+      'Other'
+    ];
+
+    const beautyAndWellnessOptions = [
+      'Facial treatments',
+      'Body massage',
+      'Sauna',
+      'Cryotherapy',
+      'Skin care',
+      'Hair treatments',
+      'Nail care',
+      'Spa treatments',
+      'Wellness consultation',
+      'Other'
+    ];
+
+    // Disease options
     const diseaseOptions = [
       'Diabetes',
       'Hypertension',
@@ -152,9 +194,12 @@ export class MedicalFormService {
       'Arthritis',
       'Cancer',
       'Epilepsy',
+      'Autoimmune diseases',
+      'Mental health conditions',
       'Other'
     ];
 
+    // Health issue options
     const healthIssueOptions = [
       'Back pain',
       'Joint stiffness',
@@ -163,24 +208,52 @@ export class MedicalFormService {
       'Insomnia',
       'Headaches',
       'Circulation problems',
+      'Digestive issues',
+      'Respiratory problems',
       'Other'
     ];
 
+    // Drug/Implant options
     const drugImplantOptions = [
       'Insulin pump',
       'Pacemaker',
       'Joint replacement',
       'Dental implants',
       'Hearing aid',
+      'Medication',
+      'Contraceptive device',
       'Other'
     ];
 
+    // Personal data options
+    const genderOptions = ['male', 'female', 'other'];
+    const unitSystemOptions = ['metric', 'imperial'];
+    const skinTypeOptions = [
+      { value: 1, label: 'Type 1 - Very fair skin, always burns, never tans' },
+      { value: 2, label: 'Type 2 - Fair skin, usually burns, tans minimally' },
+      { value: 3, label: 'Type 3 - Medium skin, sometimes burns, tans uniformly' },
+      { value: 4, label: 'Type 4 - Olive skin, rarely burns, tans easily' },
+      { value: 5, label: 'Type 5 - Brown skin, very rarely burns, tans very easily' },
+      { value: 6, label: 'Type 6 - Dark brown/black skin, never burns, tans very easily' }
+    ];
+    const sleepQualityOptions = ['Excellent', 'Good', 'Fair', 'Poor', 'Very poor'];
+    const stressLevelOptions = ['Low', 'Moderate', 'High', 'Very high'];
+    const stressFrequencyOptions = ['Never', 'Rarely', 'Sometimes', 'Often', 'Daily'];
+
     return {
       branches: branchOptions,
-      fieldOfApplicationOptions,
+      healthOptions,
+      sportsAndFitnessOptions,
+      beautyAndWellnessOptions,
       diseaseOptions,
       healthIssueOptions,
       drugImplantOptions,
+      genderOptions,
+      unitSystemOptions,
+      skinTypeOptions,
+      sleepQualityOptions,
+      stressLevelOptions,
+      stressFrequencyOptions,
     };
   }
 

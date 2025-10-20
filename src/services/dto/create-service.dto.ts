@@ -1,9 +1,7 @@
-import { IsString, IsNotEmpty, IsNumber, IsEnum, IsOptional, IsBoolean, IsMongoId, IsArray, ValidateNested, IsPositive } from 'class-validator';
+import { IsString, IsNotEmpty, IsNumber, IsEnum, IsOptional, IsBoolean, IsMongoId, IsPositive } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
 
-
-export class CreateProductDto {
+export class CreateServiceDto {
   @ApiProperty({ example: 'Cryotherapy Session' })
   @IsString()
   @IsNotEmpty()
@@ -14,31 +12,20 @@ export class CreateProductDto {
   @IsNotEmpty()
   description: string;
 
-  @ApiProperty({ enum: ['service', 'bundle'], example: 'service' })
-  @IsEnum(['service', 'bundle'])
+  @ApiProperty({ enum: ['treatment', 'consultation', 'wellness', 'custom'], example: 'treatment' })
+  @IsEnum(['treatment', 'consultation', 'wellness', 'custom'])
   @IsNotEmpty()
   type: string;
 
   @ApiProperty({ example: 150.00 })
   @IsNumber()
-  @IsNotEmpty()
+  @IsPositive()
   price: number;
 
-  @ApiProperty({ 
-    example: '507f1f77bcf86cd799439011',
-    description: 'Service ID for this product'
-  })
-  @IsMongoId()
-  @IsNotEmpty()
-  serviceId: string;
-
-  @ApiProperty({ 
-    example: 5,
-    description: 'Quantity of the service in this product'
-  })
+  @ApiProperty({ example: 30, description: 'Duration in minutes' })
   @IsNumber()
   @IsPositive()
-  quantity: number;
+  duration: number;
 
   @ApiProperty({ example: true, required: false })
   @IsOptional()
@@ -49,4 +36,9 @@ export class CreateProductDto {
   @IsMongoId()
   @IsNotEmpty()
   branchId: string;
+
+  @ApiProperty({ example: '#FF5733', required: false })
+  @IsOptional()
+  @IsString()
+  color?: string;
 }

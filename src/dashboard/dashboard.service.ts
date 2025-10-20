@@ -6,7 +6,6 @@ import { Order, OrderDocument } from '../schemas/order.schema';
 import { Employee, EmployeeDocument } from '../schemas/employee.schema';
 import { Branch, BranchDocument } from '../schemas/branch.schema';
 import { Product, ProductDocument } from '../schemas/product.schema';
-import { Subscription, SubscriptionDocument } from '../schemas/subscription.schema';
 import { Company, CompanyDocument } from '../schemas/company.schema';
 
 @Injectable()
@@ -17,7 +16,6 @@ export class DashboardService {
     @InjectModel(Employee.name) private employeeModel: Model<EmployeeDocument>,
     @InjectModel(Branch.name) private branchModel: Model<BranchDocument>,
     @InjectModel(Product.name) private productModel: Model<ProductDocument>,
-    @InjectModel(Subscription.name) private subscriptionModel: Model<SubscriptionDocument>,
     @InjectModel(Company.name) private companyModel: Model<CompanyDocument>,
   ) {}
 

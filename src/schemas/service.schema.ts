@@ -1,40 +1,33 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 
-export type ProductDocument = Product & Document;
-
+export type ServiceDocument = Service & Document;
 
 @Schema({ timestamps: true })
-export class Product {
+export class Service {
   @Prop({ required: true })
   name: string;
 
   @Prop({ required: true })
   description: string;
 
-  @Prop({ required: true, enum: ['service', 'bundle'] })
+  @Prop({ required: true, enum: ['treatment', 'consultation', 'wellness', 'custom'] })
   type: string;
 
   @Prop({ required: true })
   price: number;
 
-  @Prop({ type: Types.ObjectId, ref: 'Service', required: true })
-  serviceId: Types.ObjectId;
-
   @Prop({ required: true })
-  quantity: number;
-
-  @Prop({ default: 0 })
-  usedQuantity: number;
+  duration: number; // in minutes
 
   @Prop({ default: true })
   active: boolean;
 
+  @Prop()
+  color: string;
+
   @Prop({ type: Types.ObjectId, ref: 'Branch', required: true })
   branchId: Types.ObjectId;
-
-  @Prop({ type: Types.ObjectId, ref: 'Company', required: true })
-  companyId: Types.ObjectId;
 }
 
-export const ProductSchema = SchemaFactory.createForClass(Product);
+export const ServiceSchema = SchemaFactory.createForClass(Service);

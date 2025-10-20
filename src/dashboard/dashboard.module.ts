@@ -7,7 +7,6 @@ import { Order, OrderSchema } from '../schemas/order.schema';
 import { Employee, EmployeeSchema } from '../schemas/employee.schema';
 import { Branch, BranchSchema } from '../schemas/branch.schema';
 import { Product, ProductSchema } from '../schemas/product.schema';
-import { Subscription, SubscriptionSchema } from '../schemas/subscription.schema';
 import { Company, CompanySchema } from '../schemas/company.schema';
 
 @Module({
@@ -18,7 +17,6 @@ import { Company, CompanySchema } from '../schemas/company.schema';
       { name: Employee.name, schema: EmployeeSchema },
       { name: Branch.name, schema: BranchSchema },
       { name: Product.name, schema: ProductSchema },
-      { name: Subscription.name, schema: SubscriptionSchema },
       { name: Company.name, schema: CompanySchema },
     ]),
   ],
