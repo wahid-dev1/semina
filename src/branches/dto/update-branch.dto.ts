@@ -1,4 +1,4 @@
-import { PartialType, ApiProperty } from '@nestjs/swagger';
+import { PartialType, ApiProperty, OmitType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsOptional, ValidateNested } from 'class-validator';
 import {
@@ -10,7 +10,7 @@ import {
 
 class UpdateAddressDto extends PartialType(AddressDto) {}
 
-export class UpdateBranchDto extends PartialType(CreateBranchDto) {
+export class UpdateBranchDto extends PartialType(OmitType(CreateBranchDto, ['address'] as const)) {
   @ApiProperty({ type: UpdateAddressDto, required: false, nullable: true })
   @IsOptional()
   @ValidateNested()
