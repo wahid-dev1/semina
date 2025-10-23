@@ -15,8 +15,8 @@ export class ServicesController {
   @Post()
   @ApiOperation({ summary: 'Create a new service' })
   @ApiResponse({ status: 201, description: 'Service created successfully' })
-  @ApiResponse({ status: 404, description: 'Company not found' })
-  @ApiResponse({ status: 409, description: 'Service with this name already exists in this company' })
+  @ApiResponse({ status: 404, description: 'Branch not found' })
+  @ApiResponse({ status: 409, description: 'Service with this name already exists in this branch' })
   async create(@Body() createServiceDto: CreateServiceDto, @Req() req: any) {
     const requesterId = req.user.id;
     const ipAddress = req.ip || req.connection.remoteAddress;
@@ -25,32 +25,34 @@ export class ServicesController {
 
   @Get()
   @ApiOperation({ summary: 'Get all services' })
-  @ApiQuery({ name: 'companyId', required: false, description: 'Filter by company ID' })
+  @ApiQuery({ name: 'branchId', required: false, description: 'Filter by branch ID' })
   @ApiQuery({ name: 'type', required: false, description: 'Filter by service type' })
   @ApiQuery({ name: 'active', required: false, description: 'Filter by active status' })
-  @ApiResponse({ status: 200, description: 'Services retrieved successfully' })
+  @ApiResponse({ status: 200, description: 'ddServices retrieved successfully' })
   async findAll(
-    @Query('companyId') companyId: string,
+    @Query('branchId') branchId: string,
     @Query('type') type: string,
     @Query('active') active: string,
     @Req() req: any
   ) {
-    const userCompanyId = req.user.companyId;
-    const filterCompanyId = req.user.role === 'admin' ? companyId : userCompanyId;
+    const userBranchId = req.user.branchId;
+    const canAccessAllBranches = ['admin', 'super-admin'].includes(req.user.role);
+    const filterBranchId = canAccessAllBranches ? branchId : userBranchId;
     const activeFilter = active ? active === 'true' : undefined;
     
-    return this.servicesService.findAll(filterCompanyId, type, activeFilter);
+    return this.servicesService.findAll(filterBranchId, type, activeFilter);
   }
 
   @Get('stats')
   @ApiOperation({ summary: 'Get service statistics' })
-  @ApiQuery({ name: 'companyId', required: false, description: 'Filter by company ID' })
+  @ApiQuery({ name: 'branchId', required: false, description: 'Filter by branch ID' })
   @ApiResponse({ status: 200, description: 'Service statistics retrieved successfully' })
-  async getStats(@Query('companyId') companyId: string, @Req() req: any) {
-    const userCompanyId = req.user.companyId;
-    const filterCompanyId = req.user.role === 'admin' ? companyId : userCompanyId;
+  async getStats(@Query('branchId') branchId: string, @Req() req: any) {
+    const userBranchId = req.user.branchId;
+    const canAccessAllBranches = ['admin', 'super-admin'].includes(req.user.role);
+    const filterBranchId = canAccessAllBranches ? branchId : userBranchId;
     
-    return this.servicesService.getServiceStats(filterCompanyId);
+    return this.servicesService.getServiceStats(filterBranchId);
   }
 
   @Get(':id')
@@ -65,7 +67,7 @@ export class ServicesController {
   @ApiOperation({ summary: 'Update service' })
   @ApiResponse({ status: 200, description: 'Service updated successfully' })
   @ApiResponse({ status: 404, description: 'Service not found' })
-  @ApiResponse({ status: 409, description: 'Service with this name already exists in this company' })
+  @ApiResponse({ status: 409, description: 'Service with this name already exists in this branch' })
   async update(@Param('id') id: string, @Body() updateServiceDto: UpdateServiceDto, @Req() req: any) {
     const requesterId = req.user.id;
     const ipAddress = req.ip || req.connection.remoteAddress;

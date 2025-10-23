@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import mongoose, { Model } from 'mongoose';
 import { Service, ServiceDocument } from '../schemas/service.schema';
 import { Branch, BranchDocument } from '../schemas/branch.schema';
 import { AuditLog, AuditLogDocument } from '../schemas/audit-log.schema';
@@ -53,7 +53,7 @@ export class ServicesService {
     const filter: any = {};
     
     if (branchId) {
-      filter.branchId = branchId;
+      filter.branchId = new mongoose.Types.ObjectId(branchId);
     }
     
     if (type) {
