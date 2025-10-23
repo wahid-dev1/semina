@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, Query, Put } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { BranchesService } from './branches.service';
 import { CreateBranchDto } from './dto/create-branch.dto';
@@ -47,7 +47,7 @@ export class BranchesController {
     return this.branchesService.getBranchStats(id, SAMINA_PROVIDER_ID);
   }
 
-  @Patch(':id')
+  @Put(':id')
   @ApiOperation({ summary: 'Update branch' })
   @ApiResponse({ status: 200, description: 'Branch updated successfully' })
   @ApiResponse({ status: 404, description: 'Branch not found' })

@@ -84,12 +84,13 @@ export class BranchesService {
     }
 
     // Verify branch remains within the Samina company context
-    const belongsToSamina = branch.companyId?.toString() === SAMINA_COMPANY_ID;
-    if (!belongsToSamina) {
-      throw new NotFoundException('Branch not found');
-    }
+    // const belongsToSamina = branch.companyId?.toString() === SAMINA_COMPANY_ID;
+    // if (!belongsToSamina) {
+    //   throw new NotFoundException('Branch not found');
+    // }
 
     // Check if email is being changed and if it already exists
+    console.log("hittt")
     if (updateBranchDto.email && updateBranchDto.email !== branch.email) {
       const existingBranch = await this.branchModel.findOne({ 
         email: updateBranchDto.email,
@@ -121,7 +122,7 @@ export class BranchesService {
   }
 
   async remove(id: string, _providerId: string, ipAddress: string): Promise<void> {
-    const branch = await this.branchModel.findById(id).exec();
+    const branch = await this.branchModel.findById(id.trim()).exec();
     if (!branch) {
       throw new NotFoundException('Branch not found');
     }
