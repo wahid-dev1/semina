@@ -190,7 +190,7 @@ export class DashboardService {
       branch: {
         id: branch._id,
         name: branch.branchName,
-        address: branch.address,
+        address: this.formatAddress(branch.address),
         phone: branch.phone,
         email: branch.email,
       },
@@ -321,5 +321,15 @@ export class DashboardService {
       date: new Date(data._id.year, data._id.month - 1, data._id.day).toISOString().split('T')[0],
       newCustomers: data.newCustomers
     }));
+  }
+
+  private formatAddress(address?: any): string {
+    if (!address) {
+      return '';
+    }
+    const { street, houseNumber, postcode, city, country } = address;
+    const streetLine = [street, houseNumber].filter(Boolean).join(' ').trim();
+    const cityLine = [postcode, city].filter(Boolean).join(' ').trim();
+    return [streetLine, cityLine, country].filter(Boolean).join(', ');
   }
 }

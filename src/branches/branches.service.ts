@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Branch, BranchDocument } from '../schemas/branch.schema';
@@ -20,14 +20,14 @@ export class BranchesService {
 
   async create(createBranchDto: CreateBranchDto, _providerId: string, ipAddress: string): Promise<Branch> {
     // Verify company exists and belongs to provider
-    const company = await this.companyModel.findOne({ 
-      _id: SAMINA_COMPANY_OBJECT_ID, 
-      providerId: SAMINA_PROVIDER_ID,
-    }).exec();
+    // const company = await this.companyModel.findOne({ 
+    //   _id: SAMINA_COMPANY_OBJECT_ID, 
+    //   providerId: SAMINA_PROVIDER_ID,
+    // }).exec();
     
-    if (!company) {
-      throw new NotFoundException('Company not found');
-    }
+    // if (!company) {
+    //   throw new NotFoundException('Company not found');
+    // }
 
     // Check if branch with same email already exists
     const existingBranch = await this.branchModel.findOne({ email: createBranchDto.email }).exec();
@@ -68,15 +68,11 @@ export class BranchesService {
       throw new NotFoundException('Branch not found');
     }
 
-    // Verify company belongs to provider
-    const company = await this.companyModel.findOne({ 
-      _id: branch.companyId, 
-      providerId: SAMINA_PROVIDER_ID,
-    }).exec();
-    
-    if (!company) {
-      throw new NotFoundException('Branch not found');
-    }
+    // // Verify branch belongs to the Samina company context
+    // const belongsToSamina = branch.companyId?.toString() === SAMINA_COMPANY_ID;
+    // if (!belongsToSamina) {
+    //   throw new NotFoundException('Branch not found');
+    // }
 
     return branch;
   }
@@ -87,26 +83,10 @@ export class BranchesService {
       throw new NotFoundException('Branch not found');
     }
 
-    // Verify company belongs to provider
-    const company = await this.companyModel.findOne({ 
-      _id: branch.companyId, 
-      providerId: SAMINA_PROVIDER_ID,
-    }).exec();
-    
-    if (!company) {
+    // Verify branch remains within the Samina company context
+    const belongsToSamina = branch.companyId?.toString() === SAMINA_COMPANY_ID;
+    if (!belongsToSamina) {
       throw new NotFoundException('Branch not found');
-    }
-
-    // If companyId is being changed, verify new company belongs to provider
-    if (updateBranchDto.companyId && updateBranchDto.companyId !== branch.companyId.toString()) {
-      const newCompany = await this.companyModel.findOne({ 
-        _id: SAMINA_COMPANY_OBJECT_ID, 
-        providerId: SAMINA_PROVIDER_ID,
-      }).exec();
-      
-      if (!newCompany) {
-        throw new BadRequestException('Company not found');
-      }
     }
 
     // Check if email is being changed and if it already exists
@@ -146,13 +126,9 @@ export class BranchesService {
       throw new NotFoundException('Branch not found');
     }
 
-    // Verify company belongs to provider
-    const company = await this.companyModel.findOne({ 
-      _id: branch.companyId, 
-      providerId: SAMINA_PROVIDER_ID,
-    }).exec();
-    
-    if (!company) {
+    // Verify branch belongs to Samina company context
+    const belongsToSamina = branch.companyId?.toString() === SAMINA_COMPANY_ID;
+    if (!belongsToSamina) {
       throw new NotFoundException('Branch not found');
     }
 

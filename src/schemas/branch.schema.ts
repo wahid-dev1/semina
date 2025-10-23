@@ -18,6 +18,23 @@ export class OpeningHours {
   isClosed: boolean;
 }
 
+@Schema({ _id: false })
+export class PostalAddress {
+  @Prop({ required: true })
+  street: string;
+
+  @Prop()
+  houseNumber?: string;
+
+  @Prop({ required: true })
+  postcode: string;
+
+  @Prop({ required: true })
+  city: string;
+
+  @Prop({ required: true })
+  country: string;
+}
 
 @Schema({ _id: false })
 export class AppSettings {
@@ -57,8 +74,11 @@ export class Branch {
   @Prop({ required: true })
   contactPerson: string;
 
-  @Prop({ required: true })
-  address: string;
+  @Prop({ type: PostalAddress, required: true })
+  address: PostalAddress;
+
+  @Prop()
+  billingAddress?: string;
 
   @Prop({ required: true })
   phone: string;

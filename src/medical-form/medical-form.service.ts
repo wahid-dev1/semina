@@ -138,7 +138,7 @@ export class MedicalFormService {
     const branchOptions = branches.map(branch => ({
       id: branch._id.toString(),
       name: branch.branchName,
-      address: branch.address,
+      address: this.formatAddress(branch.address),
       phone: branch.phone,
       email: branch.email,
     }));
@@ -279,5 +279,15 @@ export class MedicalFormService {
     }
 
     return qr.customerId as any;
+  }
+
+  private formatAddress(address?: any): string {
+    if (!address) {
+      return '';
+    }
+    const { street, houseNumber, postcode, city, country } = address;
+    const streetLine = [street, houseNumber].filter(Boolean).join(' ').trim();
+    const cityLine = [postcode, city].filter(Boolean).join(' ').trim();
+    return [streetLine, cityLine, country].filter(Boolean).join(', ');
   }
 }

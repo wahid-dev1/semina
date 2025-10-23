@@ -20,11 +20,7 @@ export class BranchesController {
   @ApiResponse({ status: 409, description: 'Branch with this email already exists' })
   async create(@Body() createBranchDto: CreateBranchDto, @Req() req: any) {
     const ipAddress = req.ip || req.connection?.remoteAddress || req.socket?.remoteAddress;
-    return this.branchesService.create(
-      { ...createBranchDto, companyId: SAMINA_COMPANY_ID },
-      SAMINA_PROVIDER_ID,
-      ipAddress,
-    );
+    return this.branchesService.create(createBranchDto, SAMINA_PROVIDER_ID, ipAddress);
   }
 
   @Get()
@@ -58,11 +54,7 @@ export class BranchesController {
   @ApiResponse({ status: 409, description: 'Branch with this email already exists' })
   async update(@Param('id') id: string, @Body() updateBranchDto: UpdateBranchDto, @Req() req: any) {
     const ipAddress = req.ip || req.connection?.remoteAddress || req.socket?.remoteAddress;
-    const dtoWithCompany =
-      updateBranchDto && updateBranchDto.companyId
-        ? { ...updateBranchDto, companyId: SAMINA_COMPANY_ID }
-        : updateBranchDto;
-    return this.branchesService.update(id, dtoWithCompany, SAMINA_PROVIDER_ID, ipAddress);
+    return this.branchesService.update(id, updateBranchDto, SAMINA_PROVIDER_ID, ipAddress);
   }
 
   @Delete(':id')

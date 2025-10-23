@@ -66,6 +66,33 @@ export class CalendarSettingsDto {
   allowMultiServiceBooking?: boolean;
 }
 
+export class AddressDto {
+  @ApiProperty({ example: '123 Medical Plaza' })
+  @IsString()
+  @IsNotEmpty()
+  street: string;
+
+  @ApiProperty({ example: 'Suite 400', required: false })
+  @IsOptional()
+  @IsString()
+  houseNumber?: string;
+
+  @ApiProperty({ example: '10001' })
+  @IsString()
+  @IsNotEmpty()
+  postcode: string;
+
+  @ApiProperty({ example: 'New York' })
+  @IsString()
+  @IsNotEmpty()
+  city: string;
+
+  @ApiProperty({ example: 'USA' })
+  @IsString()
+  @IsNotEmpty()
+  country: string;
+}
+
 export class CreateBranchDto {
   @ApiProperty({ example: 'WellCare Berlin' })
   @IsString()
@@ -77,10 +104,15 @@ export class CreateBranchDto {
   @IsNotEmpty()
   contactPerson: string;
 
-  @ApiProperty({ example: 'Kurfürstendamm 123, 10711 Berlin, Germany' })
+  @ApiProperty({ type: AddressDto })
+  @ValidateNested()
+  @Type(() => AddressDto)
+  address: AddressDto;
+
+  @ApiProperty({ example: 'Billing Dept, 500 Billing Street, NYC', required: false })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  address: string;
+  billingAddress?: string;
 
   @ApiProperty({ example: '+49 30 123456' })
   @IsString()
@@ -142,9 +174,4 @@ export class CreateBranchDto {
   @IsOptional()
   @IsBoolean()
   visibleToOthers?: boolean;
-
-  @ApiProperty({ example: '507f1f77bcf86cd799439011' })
-  @IsString()
-  @IsNotEmpty()
-  companyId: string;
 }
