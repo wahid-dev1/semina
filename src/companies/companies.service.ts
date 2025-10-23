@@ -5,6 +5,7 @@ import { Company, CompanyDocument } from '../schemas/company.schema';
 import { AuditLog, AuditLogDocument } from '../schemas/audit-log.schema';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
+import { SAMINA_COMPANY_ID, SAMINA_PROVIDER_ID } from '@/common/constants/samina.constants';
 
 @Injectable()
 export class CompaniesService {
@@ -13,16 +14,22 @@ export class CompaniesService {
     @InjectModel(AuditLog.name) private auditLogModel: Model<AuditLogDocument>,
   ) {}
 
-  async create(createCompanyDto: CreateCompanyDto, providerId: string, ipAddress: string): Promise<Company> {
+  async create(createCompanyDto: CreateCompanyDto, _providerId: string, ipAddress: string): Promise<Company> {
     // Check if company with same email already exists
     const existingCompany = await this.companyModel.findOne({ email: createCompanyDto.email }).exec();
     if (existingCompany) {
       throw new ConflictException('Company with this email already exists');
     }
 
+    const existingSamina = await this.companyModel.findById(SAMINA_COMPANY_ID).exec();
+    if (existingSamina) {
+      throw new ConflictException('Samina company already exists');
+    }
+
     const company = new this.companyModel({
       ...createCompanyDto,
-      providerId,
+      _id: SAMINA_COMPANY_ID,
+      providerId: SAMINA_PROVIDER_ID,
     });
 
     const savedCompany = await company.save();
@@ -39,20 +46,20 @@ export class CompaniesService {
     return savedCompany;
   }
 
-  async findAll(providerId: string): Promise<Company[]> {
-    return this.companyModel.find({ providerId }).exec();
+  async findAll(_providerId: string): Promise<Company[]> {
+    return this.companyModel.find({ providerId: SAMINA_PROVIDER_ID }).exec();
   }
 
-  async findOne(id: string, providerId: string): Promise<Company> {
-    const company = await this.companyModel.findOne({ _id: id, providerId }).exec();
+  async findOne(id: string, _providerId: string): Promise<Company> {
+    const company = await this.companyModel.findOne({ _id: id, providerId: SAMINA_PROVIDER_ID }).exec();
     if (!company) {
       throw new NotFoundException('Company not found');
     }
     return company;
   }
 
-  async update(id: string, updateCompanyDto: UpdateCompanyDto, providerId: string, ipAddress: string): Promise<Company> {
-    const company = await this.companyModel.findOne({ _id: id, providerId }).exec();
+  async update(id: string, updateCompanyDto: UpdateCompanyDto, _providerId: string, ipAddress: string): Promise<Company> {
+    const company = await this.companyModel.findOne({ _id: id, providerId: SAMINA_PROVIDER_ID }).exec();
     if (!company) {
       throw new NotFoundException('Company not found');
     }
@@ -85,8 +92,8 @@ export class CompaniesService {
     return updatedCompany;
   }
 
-  async remove(id: string, providerId: string, ipAddress: string): Promise<void> {
-    const company = await this.companyModel.findOne({ _id: id, providerId }).exec();
+  async remove(id: string, _providerId: string, ipAddress: string): Promise<void> {
+    const company = await this.companyModel.findOne({ _id: id, providerId: SAMINA_PROVIDER_ID }).exec();
     if (!company) {
       throw new NotFoundException('Company not found');
     }

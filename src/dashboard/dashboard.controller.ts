@@ -2,6 +2,7 @@ import { Controller, Get, UseGuards, Req, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { DashboardService } from './dashboard.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { SAMINA_COMPANY_ID } from '@/common/constants/samina.constants';
 
 @ApiTags('Dashboard')
 @Controller('dashboard')
@@ -17,7 +18,7 @@ export class DashboardController {
   @ApiResponse({ status: 200, description: 'Dashboard summary retrieved successfully' })
   async getSummary(
     @Query('branchId') branchId: string,
-    @Query('companyId') companyId: string,
+    @Query('companyId') _companyId: string,
     @Req() req: any
   ) {
     // If user is not admin, filter by their branch
@@ -25,7 +26,7 @@ export class DashboardController {
     const canAccessAllBranches = ['admin', 'super-admin'].includes(req.user.role);
     const filterBranchId = canAccessAllBranches ? branchId : userBranchId;
     
-    return this.dashboardService.getSummary(filterBranchId, companyId);
+    return this.dashboardService.getSummary(filterBranchId, SAMINA_COMPANY_ID);
   }
 
   @Get('branch-stats/:branchId')

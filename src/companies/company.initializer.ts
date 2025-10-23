@@ -3,9 +3,9 @@ import { InjectModel } from '@nestjs/mongoose';
 import { ConfigService } from '@nestjs/config';
 import { Model } from 'mongoose';
 import { Company, CompanyDocument } from '../schemas/company.schema';
-import { Employee, EmployeeDocument } from '../schemas/employee.schema';
 import { CompaniesService } from './companies.service';
 import { CreateCompanyDto } from './dto/create-company.dto';
+import { SAMINA_PROVIDER_ID } from '@/common/constants/samina.constants';
 
 @Injectable()
 export class CompanyInitializer implements OnApplicationBootstrap {
@@ -13,7 +13,6 @@ export class CompanyInitializer implements OnApplicationBootstrap {
 
   constructor(
     @InjectModel(Company.name) private readonly companyModel: Model<CompanyDocument>,
-    @InjectModel(Employee.name) private readonly employeeModel: Model<EmployeeDocument>,
     private readonly companiesService: CompaniesService,
     private readonly configService: ConfigService,
   ) {}
@@ -31,19 +30,13 @@ export class CompanyInitializer implements OnApplicationBootstrap {
         return;
       }
 
-      const providerId = await this.resolveProviderId();
-      if (!providerId) {
-        this.logger.warn('Company bootstrap skipped: no provider account found for initial company.');
-        return;
-      }
-
       const companyDto = this.buildCompanyDto();
       if (!companyDto) {
         this.logger.warn('Company bootstrap skipped: incomplete INITIAL_COMPANY_* configuration.');
         return;
       }
 
-      await this.companiesService.create(companyDto, providerId, 'bootstrap');
+      await this.companiesService.create(companyDto, SAMINA_PROVIDER_ID, 'bootstrap');
       this.logger.log(`Initial company "${companyDto.name}" created successfully.`);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
@@ -74,25 +67,6 @@ export class CompanyInitializer implements OnApplicationBootstrap {
       address,
       enabled,
     };
-  }
-
-  private async resolveProviderId(): Promise<string | null> {
-    const providerEmail =
-      this.configService.get<string>('INITIAL_COMPANY_PROVIDER_EMAIL')?.trim() ||
-      this.configService.get<string>('SUPER_ADMIN_EMAIL')?.trim();
-
-    if (!providerEmail) {
-      this.logger.warn('INITIAL_COMPANY_PROVIDER_EMAIL and SUPER_ADMIN_EMAIL are not set.');
-      return null;
-    }
-
-    const provider = await this.employeeModel.findOne({ email: providerEmail }).exec();
-    if (!provider) {
-      this.logger.warn(`Provider with email ${providerEmail} not found.`);
-      return null;
-    }
-
-    return provider._id.toString();
   }
 
   private shouldBootstrap(): boolean {

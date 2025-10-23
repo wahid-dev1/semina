@@ -1,11 +1,14 @@
 import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Branch, BranchDocument } from '../schemas/branch.schema';
 import { Company, CompanyDocument } from '../schemas/company.schema';
 import { AuditLog, AuditLogDocument } from '../schemas/audit-log.schema';
 import { CreateBranchDto } from './dto/create-branch.dto';
 import { UpdateBranchDto } from './dto/update-branch.dto';
+import { SAMINA_COMPANY_ID, SAMINA_PROVIDER_ID } from '@/common/constants/samina.constants';
+
+const SAMINA_COMPANY_OBJECT_ID = new Types.ObjectId(SAMINA_COMPANY_ID);
 
 @Injectable()
 export class BranchesService {
@@ -15,11 +18,11 @@ export class BranchesService {
     @InjectModel(AuditLog.name) private auditLogModel: Model<AuditLogDocument>,
   ) {}
 
-  async create(createBranchDto: CreateBranchDto, providerId: string, ipAddress: string): Promise<Branch> {
+  async create(createBranchDto: CreateBranchDto, _providerId: string, ipAddress: string): Promise<Branch> {
     // Verify company exists and belongs to provider
     const company = await this.companyModel.findOne({ 
-      _id: createBranchDto.companyId, 
-      providerId 
+      _id: SAMINA_COMPANY_OBJECT_ID, 
+      providerId: SAMINA_PROVIDER_ID,
     }).exec();
     
     if (!company) {
@@ -32,7 +35,10 @@ export class BranchesService {
       throw new ConflictException('Branch with this email already exists');
     }
 
-    const branch = new this.branchModel(createBranchDto);
+    const branch = new this.branchModel({
+      ...createBranchDto,
+      companyId: SAMINA_COMPANY_OBJECT_ID,
+    });
     const savedBranch = await branch.save();
 
     // Log creation
@@ -47,32 +53,15 @@ export class BranchesService {
     return savedBranch;
   }
 
-  async findAll(providerId: string, companyId?: string): Promise<Branch[]> {
+  async findAll(_providerId: string, _companyId?: string): Promise<Branch[]> {
     const filter: any = {};
     
-    if (companyId) {
-      // Verify company belongs to provider
-      const company = await this.companyModel.findOne({ 
-        _id: companyId, 
-        providerId 
-      }).exec();
-      
-      if (!company) {
-        throw new NotFoundException('Company not found');
-      }
-      
-      filter.companyId = companyId;
-    } else {
-      // Get all companies for this provider and find branches
-      const companies = await this.companyModel.find({ providerId }).select('_id').exec();
-      const companyIds = companies.map(c => c._id);
-      filter.companyId = { $in: companyIds };
-    }
+    filter.companyId = SAMINA_COMPANY_OBJECT_ID;
 
     return this.branchModel.find(filter).populate('companyId', 'name').exec();
   }
 
-  async findOne(id: string, providerId: string): Promise<Branch> {
+  async findOne(id: string, _providerId: string): Promise<Branch> {
     const branch = await this.branchModel.findById(id).populate('companyId', 'name').exec();
     
     if (!branch) {
@@ -82,7 +71,7 @@ export class BranchesService {
     // Verify company belongs to provider
     const company = await this.companyModel.findOne({ 
       _id: branch.companyId, 
-      providerId 
+      providerId: SAMINA_PROVIDER_ID,
     }).exec();
     
     if (!company) {
@@ -92,7 +81,7 @@ export class BranchesService {
     return branch;
   }
 
-  async update(id: string, updateBranchDto: UpdateBranchDto, providerId: string, ipAddress: string): Promise<Branch> {
+  async update(id: string, updateBranchDto: UpdateBranchDto, _providerId: string, ipAddress: string): Promise<Branch> {
     const branch = await this.branchModel.findById(id).exec();
     if (!branch) {
       throw new NotFoundException('Branch not found');
@@ -101,7 +90,7 @@ export class BranchesService {
     // Verify company belongs to provider
     const company = await this.companyModel.findOne({ 
       _id: branch.companyId, 
-      providerId 
+      providerId: SAMINA_PROVIDER_ID,
     }).exec();
     
     if (!company) {
@@ -111,8 +100,8 @@ export class BranchesService {
     // If companyId is being changed, verify new company belongs to provider
     if (updateBranchDto.companyId && updateBranchDto.companyId !== branch.companyId.toString()) {
       const newCompany = await this.companyModel.findOne({ 
-        _id: updateBranchDto.companyId, 
-        providerId 
+        _id: SAMINA_COMPANY_OBJECT_ID, 
+        providerId: SAMINA_PROVIDER_ID,
       }).exec();
       
       if (!newCompany) {
@@ -132,7 +121,10 @@ export class BranchesService {
     }
 
     const oldValues = branch.toObject();
-    Object.assign(branch, updateBranchDto);
+    Object.assign(branch, {
+      ...updateBranchDto,
+      companyId: SAMINA_COMPANY_OBJECT_ID,
+    });
     const updatedBranch = await branch.save();
 
     // Log update
@@ -148,7 +140,7 @@ export class BranchesService {
     return updatedBranch;
   }
 
-  async remove(id: string, providerId: string, ipAddress: string): Promise<void> {
+  async remove(id: string, _providerId: string, ipAddress: string): Promise<void> {
     const branch = await this.branchModel.findById(id).exec();
     if (!branch) {
       throw new NotFoundException('Branch not found');
@@ -157,7 +149,7 @@ export class BranchesService {
     // Verify company belongs to provider
     const company = await this.companyModel.findOne({ 
       _id: branch.companyId, 
-      providerId 
+      providerId: SAMINA_PROVIDER_ID,
     }).exec();
     
     if (!company) {
@@ -180,8 +172,8 @@ export class BranchesService {
     });
   }
 
-  async getBranchStats(id: string, providerId: string) {
-    const branch = await this.findOne(id, providerId);
+  async getBranchStats(id: string, _providerId: string) {
+    const branch = await this.findOne(id, SAMINA_PROVIDER_ID);
     
     // In a real implementation, you'd aggregate data from related collections
     // For now, return basic branch info

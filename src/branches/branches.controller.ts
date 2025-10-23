@@ -4,6 +4,7 @@ import { BranchesService } from './branches.service';
 import { CreateBranchDto } from './dto/create-branch.dto';
 import { UpdateBranchDto } from './dto/update-branch.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { SAMINA_COMPANY_ID, SAMINA_PROVIDER_ID } from '@/common/constants/samina.constants';
 
 @ApiTags('Branches')
 @Controller('branches')
@@ -18,36 +19,36 @@ export class BranchesController {
   @ApiResponse({ status: 404, description: 'Company not found' })
   @ApiResponse({ status: 409, description: 'Branch with this email already exists' })
   async create(@Body() createBranchDto: CreateBranchDto, @Req() req: any) {
-    const providerId = req.user.id; // Assuming user is a provider
-    const ipAddress = req.ip || req.connection.remoteAddress;
-    return this.branchesService.create(createBranchDto, providerId, ipAddress);
+    const ipAddress = req.ip || req.connection?.remoteAddress || req.socket?.remoteAddress;
+    return this.branchesService.create(
+      { ...createBranchDto, companyId: SAMINA_COMPANY_ID },
+      SAMINA_PROVIDER_ID,
+      ipAddress,
+    );
   }
 
   @Get()
   @ApiOperation({ summary: 'Get all branches' })
   @ApiQuery({ name: 'companyId', required: false, description: 'Filter by company ID' })
   @ApiResponse({ status: 200, description: 'Branches retrieved successfully' })
-  async findAll(@Query('companyId') companyId: string, @Req() req: any) {
-    const providerId = req.user.id; // Assuming user is a provider
-    return this.branchesService.findAll(providerId, companyId);
+  async findAll(@Query('companyId') _companyId: string) {
+    return this.branchesService.findAll(SAMINA_PROVIDER_ID, SAMINA_COMPANY_ID);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get branch by ID' })
   @ApiResponse({ status: 200, description: 'Branch retrieved successfully' })
   @ApiResponse({ status: 404, description: 'Branch not found' })
-  async findOne(@Param('id') id: string, @Req() req: any) {
-    const providerId = req.user.id; // Assuming user is a provider
-    return this.branchesService.findOne(id, providerId);
+  async findOne(@Param('id') id: string) {
+    return this.branchesService.findOne(id, SAMINA_PROVIDER_ID);
   }
 
   @Get(':id/stats')
   @ApiOperation({ summary: 'Get branch statistics' })
   @ApiResponse({ status: 200, description: 'Branch statistics retrieved successfully' })
   @ApiResponse({ status: 404, description: 'Branch not found' })
-  async getStats(@Param('id') id: string, @Req() req: any) {
-    const providerId = req.user.id; // Assuming user is a provider
-    return this.branchesService.getBranchStats(id, providerId);
+  async getStats(@Param('id') id: string) {
+    return this.branchesService.getBranchStats(id, SAMINA_PROVIDER_ID);
   }
 
   @Patch(':id')
@@ -56,9 +57,12 @@ export class BranchesController {
   @ApiResponse({ status: 404, description: 'Branch not found' })
   @ApiResponse({ status: 409, description: 'Branch with this email already exists' })
   async update(@Param('id') id: string, @Body() updateBranchDto: UpdateBranchDto, @Req() req: any) {
-    const providerId = req.user.id; // Assuming user is a provider
-    const ipAddress = req.ip || req.connection.remoteAddress;
-    return this.branchesService.update(id, updateBranchDto, providerId, ipAddress);
+    const ipAddress = req.ip || req.connection?.remoteAddress || req.socket?.remoteAddress;
+    const dtoWithCompany =
+      updateBranchDto && updateBranchDto.companyId
+        ? { ...updateBranchDto, companyId: SAMINA_COMPANY_ID }
+        : updateBranchDto;
+    return this.branchesService.update(id, dtoWithCompany, SAMINA_PROVIDER_ID, ipAddress);
   }
 
   @Delete(':id')
@@ -66,9 +70,8 @@ export class BranchesController {
   @ApiResponse({ status: 200, description: 'Branch deleted successfully' })
   @ApiResponse({ status: 404, description: 'Branch not found' })
   async remove(@Param('id') id: string, @Req() req: any) {
-    const providerId = req.user.id; // Assuming user is a provider
-    const ipAddress = req.ip || req.connection.remoteAddress;
-    await this.branchesService.remove(id, providerId, ipAddress);
+    const ipAddress = req.ip || req.connection?.remoteAddress || req.socket?.remoteAddress;
+    await this.branchesService.remove(id, SAMINA_PROVIDER_ID, ipAddress);
     return { message: 'Branch deleted successfully' };
   }
 }

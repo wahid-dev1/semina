@@ -6,7 +6,7 @@ import { Order, OrderDocument } from '../schemas/order.schema';
 import { Employee, EmployeeDocument } from '../schemas/employee.schema';
 import { Branch, BranchDocument } from '../schemas/branch.schema';
 import { Product, ProductDocument } from '../schemas/product.schema';
-import { Company, CompanyDocument } from '../schemas/company.schema';
+import { SAMINA_COMPANY_ID } from '@/common/constants/samina.constants';
 
 @Injectable()
 export class DashboardService {
@@ -16,10 +16,9 @@ export class DashboardService {
     @InjectModel(Employee.name) private employeeModel: Model<EmployeeDocument>,
     @InjectModel(Branch.name) private branchModel: Model<BranchDocument>,
     @InjectModel(Product.name) private productModel: Model<ProductDocument>,
-    @InjectModel(Company.name) private companyModel: Model<CompanyDocument>,
   ) {}
 
-  async getSummary(branchId?: string, companyId?: string) {
+  async getSummary(branchId?: string, _companyId?: string) {
     const now = new Date();
     const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const startOfWeek = new Date(startOfDay);
@@ -30,9 +29,9 @@ export class DashboardService {
     const filter: any = {};
     if (branchId) {
       filter.branchId = branchId;
-    } else if (companyId) {
-      // Get all branches for this company
-      const branches = await this.branchModel.find({ companyId }).select('_id').exec();
+    } else {
+      // Default to all branches for Samina company
+      const branches = await this.branchModel.find({ companyId: SAMINA_COMPANY_ID }).select('_id').exec();
       filter.branchId = { $in: branches.map(b => b._id) };
     }
 
